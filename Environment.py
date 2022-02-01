@@ -97,7 +97,6 @@ class Environment:
                 best= abs(min((self.volumes[i]-to_transfer)-self.goal,(self.volumes[j]-to_transfer)-self.goal))
                 self.actions["Transfer"][i,j] = best
 
-
     def get_distance(self):
         return np.abs(self.goal - np.sum(self.volumes))
     
