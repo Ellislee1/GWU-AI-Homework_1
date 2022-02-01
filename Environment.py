@@ -51,7 +51,9 @@ class Environment:
         self.get_h()
 
     def get_state(self):
-        return self.volumes
+        state = self.volumes.copy()
+        state = np.append(state, 0)
+        return state
 
     def get_h(self):
         cur_dist = self.get_distance()
