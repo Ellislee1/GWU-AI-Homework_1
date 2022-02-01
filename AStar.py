@@ -2,12 +2,13 @@ import numpy as np
 from Environment import Environment as Env
 
 class Node:
-    def __init__(self, state, parent, g=0, h=0):
+    def __init__(self, state, parent, h=0):
         self.state = state
         self.parent = parent
-        self.g = g
+        self.g = state[-1]
         self.h = h
-        self.f = g+h
+        self.f = self.g+self.h
+        self.success = None
 
     def __str__(self) -> str:
         return f'{self.state}, {self.f}'
@@ -23,10 +24,18 @@ class AStar():
         self.empty = False
     
     def list_open(self):
-        return self.open
+        for node in self.open:
+            print(node)
     
     def list_closed(self):
-        return self.closed
+        for node in self.closed:
+            print(node)
+    
+    def get_h(self, state):
+        goal = self.env.goal
+        total = np.sum(state)
+        diffs = abs(state-goal)
+        return min(diffs)+(0.2*total)
     
     def step(self):
         if len(self.open) <= 0:
@@ -43,14 +52,28 @@ class AStar():
                     low_index = i
         
         q = self.open.pop(low_index)
-
         # Generate Q's successors
+        successors = self.env.proporgate(q.state[:-1],q.state[-1])
+        print(successors)
+        # Add to open
+        for state in successors:
+            if self.check_finished(state):
+                self.success = state
+                return True
+            self.open.append(Node(state,q, self.get_h(state[:-1])))
+
 
         self.closed.append(q)
         return len(self.open) <= 0
+    
+    def check_finished(self, state) -> bool:
+        for elem in state[:-1]:
+            if elem == self.env.goal:
+                return True
+        return False
+
 
     def run(self):
         while not self.empty:
-            print("Here")
             self.empty = self.step()
 

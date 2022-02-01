@@ -14,6 +14,6 @@ env = Env(pitchers,goal)
 
 a = A(env)
 
-print(a.list_open(), a.list_closed())
+
 a.run()
-print(a.list_open(), a.list_closed())
+print(a.success)
