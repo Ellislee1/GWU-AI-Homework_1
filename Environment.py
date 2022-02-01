@@ -13,9 +13,9 @@ class Environment:
 
         self.actions = {}
 
-        self.actions["Fill"] = np.zeros(len(pitchers))
-        self.actions["Empty"] = np.zeros(len(pitchers)+1)
-        self.actions["Transfer"] = np.zeros((len(pitchers)+1,len(pitchers)+1))
+        self.actions["Fill"] = np.full(len(pitchers), np.inf)
+        self.actions["Empty"] = np.full(len(pitchers)+1, np.inf)
+        self.actions["Transfer"] = np.full((len(pitchers)+1,len(pitchers)+1), np.inf)
 
         self.get_h()
     
@@ -30,6 +30,10 @@ class Environment:
                 self.volumes[source] = 0
                 self.steps += 1
             
+            elif dest == -2 and self.volumes[source] > 0:
+                print("Here")
+                self.volumes[source] = 0
+                self.steps += 1
             else:
             
                 dest_diff = self.pitchers[dest] - self.volumes[dest]
@@ -37,10 +41,9 @@ class Environment:
                 
 
                 if source_val > 0 and dest_diff > 0:
-                    worst = min(source_val,dest_diff)
-
+                    print(source_val, dest_diff)
+                    worst = min(source_val,dest_diff, )
                     to_move = dest_diff - (dest_diff-worst)
-
                     self.volumes[dest] += to_move
                     self.volumes[source] -= to_move
 
@@ -56,27 +59,30 @@ class Environment:
         # Get the distances for filling a pitcher
         for i in range(len(self.actions["Fill"])):
             if self.volumes[i] == self.pitchers[i]:
-                self.actions["Fill"][i] = 0
+                self.actions["Fill"][i] = inf
                 continue
             
-            # Add distance code
-            self.actions["Fill"][i] = self.get_experimental_dist()
+            copy = self.volumes.copy()
+            copy[i] = self.pitchers[i]
+            self.actions["Fill"][i] = self.get_experimental_dist(copy)
         
         # Get the distance for emptying a pitcher
         for i in range(-1,len(self.pitchers)):
             if self.volumes[i] == 0:
-                self.actions["Empty"][i] = 0
+                self.actions["Empty"][i] = inf
                 continue
 
             # Add distance code
-            self.actions["Empty"][i] = self.get_experimental_dist()
+            copy = self.volumes.copy()
+            copy[i] = 0
+            self.actions["Empty"][i] = self.get_experimental_dist(copy)
 
         # Get the distance for transfering liquid
         for i in range(-1,len(self.pitchers)):
             # Cannot transfer if there is nothing in pitcher[i], so continue
             if self.volumes[i] == 0:
                 for j in range(-1,len(self.pitchers)):
-                    self.actions["Transfer"][i,j] = 0
+                    self.actions["Transfer"][i,j] = inf
                 continue
 
             for j in range(-1,len(self.pitchers)):
@@ -86,23 +92,31 @@ class Environment:
                 
                 # Cannot transfer to an already full container
                 if j >= 0 and self.volumes[j] == self.pitchers[j]:
-                    self.actions["Transfer"][i,j] = 0
+                    self.actions["Transfer"][i,j] = inf
                     continue
 
                 if j == -1:
                     # Add distance code
-                    self.actions["Transfer"][i,j] = self.get_experimental_dist()
+                    copy = self.volumes.copy()
+                    copy[j] += self.volumes[i]
+                    copy[i] = 0
+                    self.actions["Transfer"][i,j] = self.get_experimental_dist(copy)
                     continue
 
                 # Add distance code
-                self.actions["Transfer"][i,j] = self.get_experimental_dist()
+                copy = self.volumes.copy()
+                diff = self.pitchers[j] - copy[j]
+                move = min(diff, copy[i])
+                copy[i] -= move
+                copy[j] += move
+                self.actions["Transfer"][i,j] = self.get_experimental_dist(copy)
 
     def get_distance(self):
         return np.abs(self.goal - np.sum(self.volumes))
     
     # Used for getting the example costs (distances) NOT IMPLIMENTED
-    def get_experimental_dist(self):
-        return inf
+    def get_experimental_dist(self, state):
+        return np.inf
     
     def __str__(self) -> str:
         headers = ""
