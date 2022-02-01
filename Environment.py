@@ -1,6 +1,7 @@
 from readline import get_history_item
 from this import d
 import numpy as np
+from math import inf
 
 class Environment:
     def __init__(self, pitchers, goal):
@@ -57,8 +58,9 @@ class Environment:
             if self.volumes[i] == self.pitchers[i]:
                 self.actions["Fill"][i] = 0
                 continue
-            diff = self.pitchers[i] - self.volumes[i]
-            self.actions["Fill"][i] = cur_dist+diff
+            
+            # Add distance code
+            self.actions["Fill"][i] = self.get_experimental_dist()
         
         # Get the distance for emptying a pitcher
         for i in range(-1,len(self.pitchers)):
@@ -66,8 +68,8 @@ class Environment:
                 self.actions["Empty"][i] = 0
                 continue
 
-            diff = self.pitchers[i]
-            self.actions["Empty"][i] = cur_dist-diff
+            # Add distance code
+            self.actions["Empty"][i] = self.get_experimental_dist()
 
         # Get the distance for transfering liquid
         for i in range(-1,len(self.pitchers)):
@@ -88,20 +90,19 @@ class Environment:
                     continue
 
                 if j == -1:
-                    diff = cur_dist + self.volumes[-1]+self.volumes[i]
+                    # Add distance code
+                    self.actions["Transfer"][i,j] = self.get_experimental_dist()
                     continue
 
-                dest_diff = self.pitchers[j] - self.volumes[j]
-                to_transfer = min(self.volumes[i],dest_diff)
-
-                best= abs(min((self.volumes[i]-to_transfer)-self.goal,(self.volumes[j]-to_transfer)-self.goal))
-                self.actions["Transfer"][i,j] = best
+                # Add distance code
+                self.actions["Transfer"][i,j] = self.get_experimental_dist()
 
     def get_distance(self):
         return np.abs(self.goal - np.sum(self.volumes))
     
-    def get_experimental_dist(self, var=None):
-        pass
+    # Used for getting the example costs (distances) NOT IMPLIMENTED
+    def get_experimental_dist(self):
+        return inf
     
     def __str__(self) -> str:
         headers = ""
