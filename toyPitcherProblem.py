@@ -15,7 +15,7 @@ env = Env(pitchers, goal)
 
 a = A(env)
 
-a.run()
+a.run(naive=False)
 print("Done")
 a.print_path()
 print(a.get_steps())

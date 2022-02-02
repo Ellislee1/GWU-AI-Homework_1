@@ -32,6 +32,8 @@ class AStar:
         # self.open.append(Node([0,8,0,1], self.open[0]))
         self.empty = False
         self.success = None
+        self.lower = np.inf
+        self.total_explored = 99
 
     def print_path(self):
         path = []
@@ -63,7 +65,7 @@ class AStar:
         diffs = abs(state - goal)
         return min(diffs) + (0.2 * total)
 
-    def step(self) -> bool:
+    def step(self, naive=True) -> bool:
         if len(self.open) <= 0:
             return True
 
@@ -83,9 +85,17 @@ class AStar:
         # Add to open
         for state in successors:
             if self.check_finished(state):
-                self.success = Node(state, q, self.get_h(state))
-                self.clear_up()
-                return True
+                n = Node(state, q, self.get_h(state))
+
+                val = self.clear_up(n)
+
+                if naive:
+                    self.success = val
+                    return True
+                # print(val, self.lower, val < self.lower)
+                if val.g < self.lower:
+                    self.success = val
+                    self.lower = val.g
 
             to_add = Node(state, q, self.get_h(state[:-1]))
             skip = False
@@ -104,7 +114,24 @@ class AStar:
                 continue
             self.open.append(to_add)
             self.closed.append(q)
+        self.close_stale()
+        if len(self.closed) % 100 == 0:
+            print(f"Explored {len(self.closed)}")
         return len(self.open) <= 0
+
+    def close_stale(self):
+        if self.lower == np.inf:
+            return
+
+        new_open = []
+        for node in self.open:
+            if node.g <= self.lower:
+                new_open.append(node)
+            else:
+                self.closed.append(node)
+
+        self.open = new_open.copy()
+        # print(len(self.open), len(self.closed), self.lower)
 
     def check_finished(self, state) -> bool:
         for elem in state[:-1]:
@@ -112,27 +139,29 @@ class AStar:
                 return True
         return False
 
-    def run(self):
+    def run(self, naive=True):
         while not self.empty:
-            self.empty = self.step()
+            self.empty = self.step(naive)
 
-    def clear_up(self):
-        if self.success is None:
-            return
+    def clear_up(self, poss):
 
-        node = self.success
+        node = poss
+        self.closed.append(node)
         success_index = np.where(node.state[:-1] == self.env.goal)[0]
 
+        # print(node.state[:-1][-1], self.env.goal)
         if not node.state[:-1][-1] == self.env.goal:
             new_state = np.copy(node.state)
             if not node.state[:-1][-1] == 0:
                 new_state[-2] = 0
                 new_state[-1] += 1
                 node = Node(new_state, node)
+                self.closed.append(node)
 
             new_state[-2] = self.env.goal
             new_state[-1] += 1
             new_state[success_index] = 0
             node = Node(new_state, node)
+            self.closed.append(node)
 
-            self.success = node
+        return node
