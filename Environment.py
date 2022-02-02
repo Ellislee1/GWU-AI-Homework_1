@@ -1,7 +1,5 @@
-from readline import get_history_item
-from this import d
 import numpy as np
-from math import inf
+
 
 class Environment:
     def __init__(self, pitchers, goal):
@@ -9,18 +7,20 @@ class Environment:
         self.goal = goal
         self.steps = 0
 
-        self.volumes = np.zeros(len(pitchers)+1)
+        self.volumes = np.zeros(len(pitchers) + 1)
 
         self.actions = {}
 
         self.actions["Fill"] = np.full(len(pitchers), np.inf)
-        self.actions["Empty"] = np.full(len(pitchers)+1, np.inf)
-        self.actions["Transfer"] = np.full((len(pitchers)+1,len(pitchers)+1), np.inf)
+        self.actions["Empty"] = np.full(len(pitchers) + 1, np.inf)
+        self.actions["Transfer"] = np.full(
+            (len(pitchers) + 1, len(pitchers) + 1), np.inf
+        )
 
         # self.get_h()
-    
+
     def proporgate(self, volumes, steps):
-        self.volumes =volumes
+        self.volumes = volumes
         self.steps = steps
 
         new_states = []
@@ -32,29 +32,29 @@ class Environment:
 
             copy = np.copy(self.volumes)
             copy[i] = self.pitchers[i]
-            new_states.append(np.append(copy,self.steps+1))
-        
+            new_states.append(np.append(copy, self.steps + 1))
+
         # Add Emptying States
         for i in range(len(self.volumes)):
             if self.volumes[i] == 0:
                 continue
             copy = np.copy(self.volumes)
             copy[i] = 0
-            new_states.append(np.append(copy,self.steps+1))
-        
+            new_states.append(np.append(copy, self.steps + 1))
+
         # Add Transfer States
-        for i in range(-1, len(self.volumes)-1):
+        for i in range(-1, len(self.volumes) - 1):
             if self.volumes[i] == 0:
                 continue
-            for j in range(-1, len(self.volumes)-1):
+            for j in range(-1, len(self.volumes) - 1):
                 if i == j:
                     continue
-                
+
                 if j == -1:
                     copy = np.copy(self.volumes)
                     copy[j] += copy[i]
                     copy[i] = 0
-                    new_states.append(np.append(copy,self.steps+1))
+                    new_states.append(np.append(copy, self.steps + 1))
                 else:
                     copy = np.copy(self.volumes)
                     dest_diff = self.pitchers[j] - copy[j]
@@ -62,11 +62,10 @@ class Environment:
                     copy[j] += worst
                     copy[i] -= worst
 
-                    new_states.append(np.append(copy,self.steps+1))
-        
+                    new_states.append(np.append(copy, self.steps + 1))
 
         return new_states
-    
+
     # def fill (self, source, dest):
     #     if source == -2:
     #         if dest != -1:
@@ -77,16 +76,15 @@ class Environment:
     #             self.volumes[-1] += self.volumes[source]
     #             self.volumes[source] = 0
     #             self.steps += 1
-            
+
     #         elif dest == -2 and self.volumes[source] > 0:
     #             print("Here")
     #             self.volumes[source] = 0
     #             self.steps += 1
     #         else:
-            
+
     #             dest_diff = self.pitchers[dest] - self.volumes[dest]
     #             source_val = self.volumes[source]
-                
 
     #             if source_val > 0 and dest_diff > 0:
     #                 print(source_val, dest_diff)
@@ -111,11 +109,11 @@ class Environment:
     #         if self.volumes[i] == self.pitchers[i]:
     #             self.actions["Fill"][i] = inf
     #             continue
-            
+
     #         copy = self.volumes.copy()
     #         copy[i] = self.pitchers[i]
     #         self.actions["Fill"][i] = self.get_experimental_dist(copy)
-        
+
     #     # Get the distance for emptying a pitcher
     #     for i in range(-1,len(self.pitchers)):
     #         if self.volumes[i] == 0:
@@ -139,41 +137,19 @@ class Environment:
     #             # Can not transfer volume to itsself
     #             if i == j:
     #                 continue
-                
+
     #             # Cannot transfer to an already full container
     #             if j >= 0 and self.volumes[j] == self.pitchers[j]:
     #                 self.actions["Transfer"][i,j] = inf
     #                 continue
 
-    #             if j == -1:
-    #                 # Add distance code
-    #                 copy = self.volumes.copy()
-    #                 copy[j] += self.volumes[i]
-    #                 copy[i] = 0
-    #                 self.actions["Transfer"][i,j] = self.get_experimental_dist(copy)
-    #                 continue
+    #             if j == -1: # Add distance code copy = self.volumes.copy()
+    #                 copy[j] += self.volumes[i] copy[i] = 0
+    #                 self.actions["Transfer"][i,j] =
+    #                 self.get_experimental_dist(copy) continue
 
     #             # Add distance code
-    #             copy = self.volumes.copy()
-    #             diff = self.pitchers[j] - copy[j]
-    #             move = min(diff, copy[i])
-    #             copy[i] -= move
-    #             copy[j] += move
-    #             self.actions["Transfer"][i,j] = self.get_experimental_dist(copy)
-
-    
-    def __str__(self) -> str:
-        headers = ""
-
-        for i in self.pitchers:
-            headers += f'{i}\t'
-        
-        headers += "Inf"
-
-        volumes = ""
-
-        for i in self.volumes:
-            volumes += f'{i}\t'
-
-        return f'\n---------------------------------\n------ Current Environment ------\n---------------------------------'\
-        f'\n{headers}\n{volumes}\n\n\t\t Total Steps: {self.steps}'
+    #             copy = self.volumes.copy() diff = self.pitchers[j] - copy[j]
+    #             move = min(diff, copy[i]) copy[i] -= move copy[j] += move
+    #             self.actions["Transfer"][i,j] =
+    #             self.get_experimental_dist(copy)
