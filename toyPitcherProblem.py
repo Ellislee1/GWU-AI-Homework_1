@@ -3,7 +3,7 @@ from Environment import Environment as Env
 from TestPrograms.testp1 import *
 from AStar import AStar as A
 
-path = "Files/test1.txt"
+path = "Files/test2.txt"
 
 pitchers,goal = parse(path)
 
@@ -14,6 +14,6 @@ env = Env(pitchers,goal)
 
 a = A(env)
 
-
 a.run()
-print(a.success)
+print("Done")
+a.print_path()
