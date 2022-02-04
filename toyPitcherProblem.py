@@ -1,30 +1,21 @@
-from parser import parse
+from AStar import AStar as A
 from Environment import Environment as Env
+from FileParser import Parser
 
-path = "Files/test1.txt"
+path = "Files/test2.txt"
 
-pitchers,goal = parse(path)
+p = Parser()
 
-env = Env(pitchers,goal)
-print(env)
+pitchers, goal = p.parse(path)
 
-env.fill(-2,1)
-print(env)
+env = Env(pitchers, goal)
+# print(env)
 
-env.fill(1,-1)
-print(env)
+# test2(env)
 
-env.fill(-2,1)
-print(env)
+a = A(env)
 
-env.fill(1,-1)
-print(env)
-
-env.fill(-1,0)
-print(env)
-
-env.fill(-1,1)
-print(env)
-
-print(env.get_state())
-
+a.run(naive=False)
+print("Done")
+a.print_path()
+print(a.get_steps())
