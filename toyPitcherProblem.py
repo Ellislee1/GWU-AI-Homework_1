@@ -1,3 +1,4 @@
+import util
 from AStar import AStar as A
 from Environment import Environment as Env
 from FileParser import Parser
@@ -7,6 +8,7 @@ path = "Files/test2.txt"
 p = Parser()
 
 pitchers, goal = p.parse(path)
+assert util.is_valid_problem(pitchers, goal)
 
 env = Env(pitchers, goal)
 # print(env)
