@@ -9,12 +9,16 @@ p = Parser()
 pitchers, goal = p.parse(path)
 
 env = Env(pitchers, goal)
-# print(env)
-
-# test2(env)
 
 a = A(env)
 
+print("Naive")
+a.run(naive=True)
+print("Done")
+a.print_path()
+print(a.get_steps())
+
+print("None Naive")
 a.run(naive=False)
 print("Done")
 a.print_path()
