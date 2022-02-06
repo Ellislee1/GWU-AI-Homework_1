@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class Environment:
     def __init__(self, pitchers, goal):
         self.pitchers = pitchers
@@ -11,21 +10,14 @@ class Environment:
 
         self.actions = {}
 
-        self.actions["Fill"] = np.full(len(pitchers), np.inf)
-        self.actions["Empty"] = np.full(len(pitchers) + 1, np.inf)
-        self.actions["Transfer"] = np.full(
-            (len(pitchers) + 1, len(pitchers) + 1), np.inf
-        )
+    def propagate(self, volumes= None, steps = None):
 
-        # self.get_h()
-
-    def propagate(self, volumes, steps):
-        self.volumes = volumes
-        self.steps = steps
-
+        if not volumes is None and not steps is None:
+            self.load_env_state(volumes,steps)
+        
         new_states = []
 
-        # All Filling states
+        # All Filling states, this ignores filling the infinate pitcher
         for i in range(len(self.pitchers)):
             if self.volumes[i] == self.pitchers[i]:
                 continue
@@ -34,7 +26,7 @@ class Environment:
             copy[i] = self.pitchers[i]
             new_states.append(np.append(copy, self.steps + 1))
 
-        # Add Emptying States
+        # Add Emptying States, Empty all pitchers to 0 (if pitcher have some volume)
         for i in range(len(self.volumes)):
             if self.volumes[i] == 0:
                 continue
@@ -65,6 +57,11 @@ class Environment:
                     new_states.append(np.append(copy, self.steps + 1))
 
         return new_states
+
+    def load_env_state(self, volumes, steps):
+        self.volumes = volumes
+        self.steps = steps
+
 
     def get_state(self):
         state = self.volumes.copy()

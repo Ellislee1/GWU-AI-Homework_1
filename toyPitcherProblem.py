@@ -1,27 +1,36 @@
+import argparse
 import util
 from AStar import AStar as A
 from Environment import Environment as Env
 from FileParser import Parser
 
-path = "Files/test2.txt"
+default_path = "Files/test2.txt"
+default_naive = True
 
-p = Parser()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Pitcher files')
+    parser.add_argument('--file' , dest='file', type=str, help='Path to the input file')
+    parser.add_argument('--Naive' , dest='naive', type=str, help='Should the algorithm run naively')
 
-pitchers, goal = p.parse(path)
-assert util.is_valid_problem(pitchers, goal)
+    p = Parser()
+    args = parser.parse_args()
 
-env = Env(pitchers, goal)
+    file = args.file if not args.file is None else default_path
+    
+    pitchers, goal = p.parse(file)
+    assert util.is_valid_problem(pitchers, goal)
 
-a = A(env)
+    env = Env(pitchers, goal)
 
-print("Naive")
-a.run(naive=True)
-print("Done")
-a.print_path()
-print(a.get_steps())
+    a = A(env)
 
-print("None Naive")
-a.run(naive=False)
-print("Done")
-a.print_path()
-print(a.get_steps())
+    if args.naive == "True":
+        a.run(naive=True)
+    elif args.naive == "False":
+        a.run(naive=False)
+    else:
+        a.run(naive=default_naive)
+    
+    print(f'Path found takes: {a.get_steps()} steps')
+    a.print_path()
+
