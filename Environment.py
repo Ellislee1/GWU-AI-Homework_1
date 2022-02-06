@@ -19,7 +19,7 @@ class Environment:
 
         # self.get_h()
 
-    def proporgate(self, volumes, steps):
+    def propagate(self, volumes, steps):
         self.volumes = volumes
         self.steps = steps
 

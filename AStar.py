@@ -96,7 +96,7 @@ class AStar:
 
         q = self.open.pop(low_index)
         # Generate Q's successors
-        successors = self.env.proporgate(q.state[:-1], q.state[-1])
+        successors = self.env.propagate(q.state[:-1], q.state[-1])
         # Add to open
         for state in successors:
             if self.check_finished(state):
