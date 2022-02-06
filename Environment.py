@@ -9,13 +9,11 @@ class Environment:
 
         self.volumes = np.zeros(len(pitchers) + 1)
 
-        self.actions = {}
-
-        self.actions["Fill"] = np.full(len(pitchers), np.inf)
-        self.actions["Empty"] = np.full(len(pitchers) + 1, np.inf)
-        self.actions["Transfer"] = np.full(
-            (len(pitchers) + 1, len(pitchers) + 1), np.inf
-        )
+        self.actions = {"Fill": np.full(len(pitchers), np.inf),
+                        "Empty": np.full(len(pitchers) + 1, np.inf),
+                        "Transfer": np.full(
+                            (len(pitchers) + 1, len(pitchers) + 1), np.inf
+                        )}
 
         # self.get_h()
 

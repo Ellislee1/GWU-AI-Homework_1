@@ -1,5 +1,6 @@
 import numpy as np
 
+import util
 from Environment import Environment as Env
 
 
@@ -59,11 +60,52 @@ class AStar:
         for node in self.closed:
             print(node)
 
-    def get_h(self, state) -> float:
-        goal = self.env.goal
-        total = np.sum(state)
-        diffs = abs(state - goal)
-        return min(diffs) + (0.2 * total)
+    def get_h(self, state) -> int:
+        target = self.env.goal - self.env.volumes[-1]
+        # print(target)
+        # print(self.env.pitchers)
+        # print(self.env.volumes)
+        estimate = 0
+
+        # if the infinite goal pitcher is overfilled
+        if target < 0:
+            # will likely need additional logic here to estimate how many steps to goal (how much to pour out)
+            # maybe something like: if excess amount != any pitcher, estimate = 2. 1 to pour out, 1 to pour in
+            # ideal case: pour excess into a cup to reach goal state exactly
+            estimate = 1
+            return estimate
+
+        # check all pitchers except last infinite
+        for volume in self.env.volumes[:-1]:
+            # if the cup has water
+            if volume != 0:
+                # print('cup has water: ', volume)
+                if abs(target - volume) > target:
+                    break
+                target -= volume
+                estimate += 1       # add a step for transferring between cup and solution
+
+        # get the pitcher closest to the goal
+        closest, closest_index = util.find_closest(self.env.pitchers, target)
+        multiple: int = util.closest_multiple(closest, target)
+
+        # add 2 steps for each multiple (1 to fill, 1 to transfer)
+        estimate += multiple*2
+
+        # remove a step if the cup is already full
+        if self.env.volumes[closest_index] > 0:
+            estimate -= 1
+
+        # if the target quantity isn't reached exactly, add (ideally) only 1 step to
+        # transfer in/out the remaining amount
+        if abs(target - closest*multiple) != 0:
+            estimate += 1
+
+        # goal = self.env.goal
+        # total = np.sum(state)
+        # diffs = abs(state - goal)
+        # return min(diffs) + (0.2 * total)
+        return estimate
 
     def step(self, naive=True) -> bool:
         if len(self.open) <= 0:
@@ -79,7 +121,9 @@ class AStar:
                     low_f = new_f
                     low_index = i
 
+        # print(f'low index: {low_index}, low_f: {low_f}')
         q = self.open.pop(low_index)
+        # print("q: ", q)
         # Generate Q's successors
         successors = self.env.propagate(q.state[:-1], q.state[-1])
         # Add to open
