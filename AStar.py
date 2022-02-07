@@ -108,7 +108,7 @@ class AStar:
 
         # add 1 step for each filled pitcher (prioritize transferring to goal state)
         for i, amount in enumerate(state[:-2]):
-            if amount > 0:
+            if i != closest_index and amount > 0:
                 estimate += 1
 
             # check for exact solution
