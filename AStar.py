@@ -1,8 +1,39 @@
 import numpy as np
 import heapq
+import numba as nb
 
 import util
 from Environment import Environment as Env
+
+@nb.njit
+def get_h(state, goal:int, pitchers) -> int:
+    target = goal - state[-1]
+    estimate = 0
+
+    # goal pitcher is overflowed: (ideal case) just pour out exact excess into another cup
+    if target < 0:
+        return 1
+    closest, closest_index = util.find_closest(pitchers, target)
+    multiple: int = util.closest_multiple(closest, target)
+
+    # add 2 steps for each multiple (1 to fill, 1 to transfer)
+    estimate += multiple*2
+
+    # now subtract steps for pitchers that are already filled
+    # subtract a step if cup to use is already filled
+    if state[closest_index] > 0:
+        estimate -= 1
+
+    # add 1 step for each filled pitcher (prioritize transferring to goal state)
+    for i, amount in enumerate(state[:-2]):
+        if amount > 0:
+            estimate += 1
+
+        # check for exact solution
+        if target - pitchers[i] == 0:
+            return 1
+
+    return estimate
 
 
 class Node:
@@ -76,39 +107,7 @@ class AStar:
         for node in self.closed:
             print(node)
 
-    def get_h(self, state) -> int:
-
-        target = self.env.goal - state[-1]
-        estimate = 0
-
-        # goal pitcher is overflowed: (ideal case) just pour out exact excess into another cup
-        if target < 0:
-            return 1
-        closest, closest_index = util.find_closest(self.env.pitchers, target)
-        multiple: int = util.closest_multiple(closest, target)
-
-        # add 2 steps for each multiple (1 to fill, 1 to transfer)
-        estimate += multiple*2
-
-        # now subtract steps for pitchers that are already filled
-        # subtract a step if cup to use is already filled
-        if state[closest_index] > 0:
-            estimate -= 1
-
-        # add 1 step for each filled pitcher (prioritize transferring to goal state)
-        for i, amount in enumerate(state[:-2]):
-            if amount > 0:
-                estimate += 1
-
-            # check for exact solution
-            if target - self.env.pitchers[i] == 0:
-                return 1
-
-        return estimate
-
     def step(self, naive=True) -> bool:
-        if not self.runnable:
-            return True
 
         if len(self.open) <= 0:
             return True
@@ -125,16 +124,16 @@ class AStar:
             self.closed[hash(q)] = q
         
         if not self.lower is None and self.lower <= q.f:
+            self.iterations += 1
             return len(self.open) <= 0
             
         # Generate Q's successors
         successors = self.env.propagate(q.state[:-1], q.state[-1])
         # Add to open
         for state in successors:
+            to_add = Node(state, q, get_h(state, self.goal, self.env.pitchers))
             if self.check_finished(state):
-                n = Node(state, q, self.get_h(state))
-
-                val = self.clear_up(n)
+                val = self.clear_up(to_add)
 
                 if naive:
                     self.success = val
@@ -143,7 +142,7 @@ class AStar:
                     self.success = val
                     self.lower = val.g
 
-            to_add = Node(state, q, self.get_h(state[:-1]))
+            to_add = Node(state, q, get_h(state[:-1], self.goal,self.env.pitchers))
             skip = False
 
             if hash(to_add) in self.open_dict and self.open_dict[hash(to_add)].f <= to_add.f:

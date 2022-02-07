@@ -3,6 +3,7 @@ import util
 from AStar import AStar as A
 from Environment import Environment as Env
 from FileParser import Parser
+import time
 
 
 default_path = "Files/test3.txt"
@@ -26,11 +27,14 @@ if __name__ == "__main__":
     a = A(env)
 
     if args.naive == "True":
+        start = time.perf_counter()
         a.run(naive=True)
     elif args.naive == "False":
+        start = time.perf_counter()
         a.run(naive=False)
     else:
+        start = time.perf_counter()
         a.run(naive=default_naive)
-
-    print(f'Path found takes: {a.get_steps()} steps')
+    end = time.perf_counter()
     a.print_path()
+    print(f'Path found takes: {a.get_steps()} steps (That took {(end-start)/60:.3g} minutes)')
