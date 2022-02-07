@@ -39,7 +39,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 4
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run()
         self.assertEqual(a.get_steps(),7)
 
     def test_3(self):
@@ -48,7 +48,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 6
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run()
         self.assertEqual(a.get_steps(),4)
 
     def test_4(self): 
@@ -57,7 +57,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 15
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run()
         self.assertEqual(a.get_steps(),5) 
 
     def test_5(self):
@@ -66,7 +66,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 8
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run()
         self.assertEqual(a.get_steps(),5)
 
     def test_6(self): # 12-5 = 7
@@ -75,16 +75,17 @@ class EnvironmentTests(unittest.TestCase):
         goal = 7
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run()
         self.assertEqual(a.get_steps(),3)
-
+    
+    # Needs a new h
     def test_7(self): # 12-3 = 9 + (4-3) = 10
         # 3 pitcher - unused largest
         pitchers = np.array([3,4,12])
         goal = 10
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run()
         self.assertEqual(a.get_steps(),6)
 
     def test_8(self): # 15-3 = 12-1 = 11
@@ -93,7 +94,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 11
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run()
         self.assertEqual(a.get_steps(),4)
 
  
@@ -120,8 +121,8 @@ class EnvironmentTests(unittest.TestCase):
         goal = 13
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
-        self.assertEquals(a.get_steps(),0)
+        a.run()
+        self.assertEquals(a.get_steps(),None)
 
 
 
