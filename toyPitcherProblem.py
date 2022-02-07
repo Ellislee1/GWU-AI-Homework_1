@@ -10,7 +10,7 @@ default_naive = True
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Pitcher files')
     parser.add_argument('--file' , dest='file', type=str, help='Path to the input file')
-    parser.add_argument('--Naive' , dest='naive', type=str, help='Should the algorithm run naively')
+    parser.add_argument('--naive' , dest='naive', type=str, help='Should the algorithm run naively')
 
     p = Parser()
     args = parser.parse_args()
