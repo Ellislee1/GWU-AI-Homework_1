@@ -89,7 +89,7 @@ class AStar:
 
 
     def get_h(self, state) -> int:
-        target = self.env.goal - self.env.volumes[-1]
+        target = self.env.goal -self.env.volumes[-1]
         # print(target)
         # print(self.env.pitchers)
         # print(self.env.volumes)
@@ -100,11 +100,10 @@ class AStar:
             # will likely need additional logic here to estimate how many steps to goal (how much to pour out)
             # maybe something like: if excess amount != any pitcher, estimate = 2. 1 to pour out, 1 to pour in
             # ideal case: pour excess into a cup to reach goal state exactly
-            estimate = 1
-            return estimate
+            return 1
 
         # check all pitchers except last infinite
-        for volume in self.env.volumes[:-1]:
+        for volume in self.env.volumes:
             # if the cup has water
             if volume != 0:
                 # print('cup has water: ', volume)
@@ -161,6 +160,9 @@ class AStar:
             self.closed[hash(q)] = q
         elif not q in self.closed:
             self.closed[hash(q)] = q
+        
+        if not self.lower is None and self.lower <= q.f:
+            return len(self.open) <= 0
             
         # Generate Q's successors
         successors = self.env.propagate(q.state[:-1], q.state[-1])
@@ -181,12 +183,11 @@ class AStar:
             to_add = Node(state, q, self.get_h(state[:-1]))
             skip = False
 
-            if hash(to_add) in self.open_dict and self.open_dict[hash(to_add)].g < q.f:
+            if hash(to_add) in self.open_dict and self.open_dict[hash(to_add)].f <= to_add.f:
                 continue
 
 
-            if hash(to_add) in self.closed and self.closed[hash(to_add)].g < q.f:
-            # if self.closed[i] == to_add and self.closed[i].g < to_add.f:
+            if hash(to_add) in self.closed and self.closed[hash(to_add)].f <= to_add.f:
                 continue
             
             if self.lower is None or to_add.f < self.lower:
@@ -203,28 +204,6 @@ class AStar:
             print(f"Iteration:{self.iterations}: Closed branches =  {len(self.closed)} [{closed_delta}]| Open branches =  {len(self.open)} [{open_delta}]")
         self.iterations += 1
         return len(self.open) <= 0
-
-    def close_stale(self):
-        if self.lower == None:
-            return
-
-        new_open = []
-        new_open_dict = {}
-
-        for node in self.open:
-            if node.f < self.lower and not hash(node) in self.closed:
-                heapq.heappush(new_open, node)
-                new_open_dict[hash(node)] = node
-            else:
-                if hash(node) in self.closed and self.closed[hash(node)].g > node.f:
-                    self.closed[hash(node)] = node
-                elif not node in self.closed:
-                    self.closed[hash(node)] = node
-                # self.closed.add(node)
-
-        self.open = new_open.copy()
-        self.open_dict = new_open_dict
-        # print(len(self.open), len(self.closed), self.lower)
 
     def check_finished(self, state) -> bool:
         for elem in state[:-1]:
