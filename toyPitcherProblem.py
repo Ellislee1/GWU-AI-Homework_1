@@ -17,24 +17,25 @@ if __name__ == "__main__":
     p = Parser()
     args = parser.parse_args()
 
-    file = args.file if not args.file is None else default_path
+    file = args.file if args.file is not None else default_path
 
     pitchers, goal = p.parse(file)
-    assert util.is_valid_problem(pitchers, goal)
+    if util.is_valid_problem(pitchers, goal):
+        env = Env(pitchers, goal)
 
-    env = Env(pitchers, goal)
+        a = A(env)
 
-    a = A(env)
-
-    if args.naive == "True":
-        start = time.perf_counter()
-        a.run(naive=True)
-    elif args.naive == "False":
-        start = time.perf_counter()
-        a.run(naive=False)
+        if args.naive == "True":
+            start = time.perf_counter()
+            a.run(naive=True)
+        elif args.naive == "False":
+            start = time.perf_counter()
+            a.run(naive=False)
+        else:
+            start = time.perf_counter()
+            a.run(naive=default_naive)
+        end = time.perf_counter()
+        a.print_path()
+        print(f'Path found takes: {a.get_steps()} steps (That took {(end-start)/60:.3g} minutes)')
     else:
-        start = time.perf_counter()
-        a.run(naive=default_naive)
-    end = time.perf_counter()
-    a.print_path()
-    print(f'Path found takes: {a.get_steps()} steps (That took {(end-start)/60:.3g} minutes)')
+        print(f'Path found takes: -1 steps (No solution possible)')

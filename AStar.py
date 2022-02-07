@@ -5,6 +5,7 @@ import numba as nb
 import util
 from Environment import Environment as Env
 
+
 @nb.njit(nogil=True)
 def get_h(state, goal:int, pitchers) -> int:
     target = goal - state[-1]
@@ -20,7 +21,6 @@ def get_h(state, goal:int, pitchers) -> int:
     # add 2 steps for each multiple (1 to fill, 1 to transfer)
     estimate += multiple * 2
 
-    # now subtract steps for pitchers that are already filled
     # subtract a step if cup to use is already filled
     if state[closest_index] > 0:
         estimate -= 1
@@ -32,7 +32,8 @@ def get_h(state, goal:int, pitchers) -> int:
 
         # check for exact solution
         if target - pitchers[i] == 0:
-            return 1
+            estimate -= 1
+            break
 
     return estimate
 
@@ -46,7 +47,7 @@ class Node:
         self.f = self.g + self.h
 
     def __str__(self) -> str:
-        return f"{self.state}, {self.f}"
+        return f"{self.state}, f: {self.f}"
 
     def __eq__(self, __o: object) -> bool:
 
@@ -68,6 +69,7 @@ class Node:
         for i in range(len(self.state[:-1])):
             _str += str(int(self.state[i]))
         return int(_str)
+
 
 class AStar:
     def __init__(self, env: Env):
@@ -100,7 +102,7 @@ class AStar:
 
     def get_steps(self) -> int:
         if self.success is None:
-            return None
+            return -1
         return self.success.g
 
     def list_open(self):
@@ -116,6 +118,7 @@ class AStar:
         if len(self.open) <= 0:
             return True
 
+        # get min-cost state from min-heap
         q = heapq.heappop(self.open)
         try:
             del self.open_dict[hash(q)]
@@ -124,10 +127,10 @@ class AStar:
 
         if hash(q) in self.closed and self.closed[hash(q)].g > q.f:
             self.closed[hash(q)] = q
-        elif not q in self.closed:
+        elif q not in self.closed:
             self.closed[hash(q)] = q
         
-        if not self.lower is None and self.lower <= q.f:
+        if self.lower is not None and self.lower <= q.f:
             self.iterations += 1
             return len(self.open) <= 0
             
@@ -151,7 +154,6 @@ class AStar:
 
             if hash(to_add) in self.open_dict and self.open_dict[hash(to_add)].f <= to_add.f:
                 continue
-
 
             if hash(to_add) in self.closed and self.closed[hash(to_add)].f <= to_add.f:
                 continue

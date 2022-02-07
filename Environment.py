@@ -15,7 +15,7 @@ class Environment:
         
         new_states = []
 
-        # All Filling states, this ignores filling the infinate pitcher
+        # All Filling states, this ignores filling the infinite pitcher
         for i in range(len(self.pitchers)):
             if self.volumes[i] == self.pitchers[i]:
                 continue
