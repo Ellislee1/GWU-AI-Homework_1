@@ -58,7 +58,7 @@ class Node:
         if isinstance(__o, Node):
             return __o.f > self.f    
     
-    def __lt__(self, __o: object) -> bool:
+    def __gt__(self, __o: object) -> bool:
         if isinstance(__o, Node):
              return __o.f < self.f 
     
