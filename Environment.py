@@ -8,7 +8,6 @@ class Environment:
 
         self.volumes = np.zeros(len(pitchers) + 1)
 
-        self.actions = {}
 
     def propagate(self, volumes= None, steps = None):
 

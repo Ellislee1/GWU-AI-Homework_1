@@ -4,6 +4,7 @@ from AStar import AStar as A
 from Environment import Environment as Env
 from FileParser import Parser
 
+
 default_path = "Files/test2.txt"
 default_naive = True
 
@@ -33,4 +34,3 @@ if __name__ == "__main__":
     
     print(f'Path found takes: {a.get_steps()} steps')
     a.print_path()
-
