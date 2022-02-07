@@ -5,7 +5,7 @@ import numba as nb
 import util
 from Environment import Environment as Env
 
-@nb.njit
+@nb.njit(nogil=True)
 def get_h(state, goal:int, pitchers) -> int:
     target = goal - state[-1]
     estimate = 0
@@ -56,8 +56,11 @@ class Node:
     
     def __lt__(self, __o: object) -> bool:
         if isinstance(__o, Node):
-             return __o.f < self.f        
-        return False
+            return __o.f > self.f    
+    
+    def __lt__(self, __o: object) -> bool:
+        if isinstance(__o, Node):
+             return __o.f < self.f 
     
     def __hash__(self):
         _str = ""
@@ -159,10 +162,10 @@ class AStar:
                 self.closed[hash(to_add)] = to_add
 
         # self.close_stale()
-        if self.iterations % 1000 == 0:
+        if self.iterations % 500 == 0:
             open_delta, closed_delta = len(self.open) - self.previous[0], len(self.closed) - self.previous[1]
             self.previous[0], self.previous[1] =  len(self.open),  len(self.closed)
-            print(f"Iteration:{self.iterations}: Closed branches =  {len(self.closed)} [{closed_delta}]| Open branches =  {len(self.open)} [{open_delta}]")
+            print(f"Iteration:{self.iterations}: Closed branches =  {len(self.closed)} [{int(closed_delta)}]| Open branches =  {len(self.open)} [{int(open_delta)}]", end="\r")
         self.iterations += 1
         return len(self.open) <= 0
 
@@ -175,6 +178,7 @@ class AStar:
     def run(self, naive=True):
         while not self.empty:
             self.empty = self.step(naive)
+        print(f"Iteration:{self.iterations}: Closed branches =  {len(self.closed)}| Open branches =  {len(self.open)}")
 
     def clear_up(self, poss):
         node = poss
