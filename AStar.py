@@ -25,7 +25,7 @@ def get_h(state, goal:int, pitchers) -> int:
         estimate -= 1
 
     # add 1 step for each filled pitcher (prioritize transferring to goal state)
-    for i, amount in enumerate(state[:-2]):
+    for i, amount in enumerate(state[:-1]):
         if amount > 0:
             estimate += 1
 
@@ -134,10 +134,9 @@ class AStar:
         successors = self.env.propagate(q.state[:-1], q.state[-1])
         # Add to open
         for state in successors:
-            to_add = Node(state, q, get_h(state, self.goal, self.env.pitchers))
+            to_add = Node(state, q, get_h(state[:-1], self.goal, self.env.pitchers))
             if self.check_finished(state):
                 val = self.clear_up(to_add)
-
                 if naive:
                     self.success = val
                     return True
@@ -165,7 +164,7 @@ class AStar:
         if self.iterations % 500 == 0:
             open_delta, closed_delta = len(self.open) - self.previous[0], len(self.closed) - self.previous[1]
             self.previous[0], self.previous[1] =  len(self.open),  len(self.closed)
-            print(f"Iteration:{self.iterations}: Closed branches =  {len(self.closed)} [{int(closed_delta)}]| Open branches =  {len(self.open)} [{int(open_delta)}]", end="\r")
+            print(f"Iteration {self.iterations}: Closed branches =  {len(self.closed)} [{int(closed_delta)}]| Open branches =  {len(self.open)} [{int(open_delta)}]\t\t\t\t\t\t\t\t\t\t\t\t\t\t\r", end="")
         self.iterations += 1
         return len(self.open) <= 0
 
@@ -173,12 +172,12 @@ class AStar:
         for elem in state[:-1]:
             if elem == self.env.goal:
                 return True
-        return False
+
 
     def run(self, naive=True):
         while not self.empty:
             self.empty = self.step(naive)
-        print(f"Iteration:{self.iterations}: Closed branches =  {len(self.closed)}| Open branches =  {len(self.open)}")
+        print(f"\t\t\t\t\t\t\t\nIteration {self.iterations}: Closed branches =  {len(self.closed)}| Open branches =  {len(self.open)}\t\t\t\t\t\t\t\t\t")
 
     def clear_up(self, poss):
         node = poss
