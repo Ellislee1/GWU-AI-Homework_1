@@ -30,11 +30,23 @@ class AStar:
         self.closed = []
 
         self.open.append(Node(self.env.get_state(), None))
-        # self.open.append(Node([0,8,0,1], self.open[0]))
         self.empty = False
         self.success = None
-        self.lower = np.inf
+        self.lower = None
         self.total_explored = 99
+        self.goal = self.env.goal
+        self.iterations = 0
+
+        self.initilise()
+    
+    def initilise(self):
+        pitchers = self.env.pitchers
+        gcd = np.gcd.reduce(pitchers)
+        
+        if gcd <= self.goal and self.goal % gcd == 0:
+            self.runnable = True
+        else:
+            self.runnable = False
 
     def print_path(self):
         path = []
@@ -49,7 +61,7 @@ class AStar:
 
     def get_steps(self) -> int:
         if self.success is None:
-            return -1
+            return None
         return self.success.g
 
     def list_open(self):
@@ -108,6 +120,9 @@ class AStar:
         return estimate
 
     def step(self, naive=True) -> bool:
+        if not self.runnable:
+            return True
+
         if len(self.open) <= 0:
             return True
 
@@ -136,22 +151,21 @@ class AStar:
                 if naive:
                     self.success = val
                     return True
-                # print(val, self.lower, val < self.lower)
-                if val.g < self.lower:
+                if self.lower is None or val.g < self.lower:
                     self.success = val
                     self.lower = val.g
 
             to_add = Node(state, q, self.get_h(state[:-1]))
             skip = False
             for i in range(len(self.open)):
-                if self.open[i] == to_add and self.open[i].f <= to_add.f:
+                if self.open[i] == to_add and self.open[i].f < to_add.f:
                     skip = True
                     break
             if skip:
                 continue
 
             for i in range(len(self.closed)):
-                if self.closed[i] == to_add and self.closed[i].f <= to_add.f:
+                if self.closed[i] == to_add and self.closed[i].g < to_add.f:
                     skip = True
                     break
             if skip:
@@ -159,17 +173,20 @@ class AStar:
             self.open.append(to_add)
             self.closed.append(q)
         self.close_stale()
-        if len(self.closed) % 100 == 0:
-            print(f"Explored {len(self.closed)}")
+        if self.iterations % 25 == 0:
+            print(f"Iteration:{self.iterations}: Closed branches =  {len(self.closed)} | Open branches =  {len(self.open)}")
+        self.iterations += 1
         return len(self.open) <= 0
 
     def close_stale(self):
-        if self.lower == np.inf:
+        if self.lower == None:
             return
 
         new_open = []
+
+        
         for node in self.open:
-            if node.g <= self.lower:
+            if node.f < self.lower:
                 new_open.append(node)
             else:
                 self.closed.append(node)
@@ -188,7 +205,6 @@ class AStar:
             self.empty = self.step(naive)
 
     def clear_up(self, poss):
-
         node = poss
         self.closed.append(node)
         success_index = np.where(node.state[:-1] == self.env.goal)[0]
