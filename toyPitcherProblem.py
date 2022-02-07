@@ -5,7 +5,7 @@ from Environment import Environment as Env
 from FileParser import Parser
 
 
-default_path = "Files/test2.txt"
+default_path = "Files/test3.txt"
 default_naive = True
 
 if __name__ == "__main__":
@@ -17,7 +17,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     file = args.file if not args.file is None else default_path
-    
+
     pitchers, goal = p.parse(file)
     assert util.is_valid_problem(pitchers, goal)
 
@@ -31,6 +31,6 @@ if __name__ == "__main__":
         a.run(naive=False)
     else:
         a.run(naive=default_naive)
-    
+
     print(f'Path found takes: {a.get_steps()} steps')
     a.print_path()

@@ -52,17 +52,6 @@ class AStar:
 
         self.previous = np.zeros(2)
 
-        self.initilise()
-    
-    def initilise(self):
-        pitchers = self.env.pitchers
-        gcd = np.gcd.reduce(pitchers)
-        
-        if gcd <= self.goal and self.goal % gcd == 0:
-            self.runnable = True
-        else:
-            self.runnable = False
-
     def print_path(self):
         path = []
 
@@ -87,61 +76,36 @@ class AStar:
         for node in self.closed:
             print(node)
 
-
     def get_h(self, state) -> int:
-        target = self.env.goal -self.env.volumes[-1]
-        # print(target)
-        # print(self.env.pitchers)
-        # print(self.env.volumes)
+
+        target = self.env.goal - state[-1]
         estimate = 0
 
-        # if the infinite goal pitcher is overfilled
+        # goal pitcher is overflowed: (ideal case) just pour out exact excess into another cup
         if target < 0:
-            # will likely need additional logic here to estimate how many steps to goal (how much to pour out)
-            # maybe something like: if excess amount != any pitcher, estimate = 2. 1 to pour out, 1 to pour in
-            # ideal case: pour excess into a cup to reach goal state exactly
             return 1
-
-        # check all pitchers except last infinite
-        for volume in self.env.volumes:
-            # if the cup has water
-            if volume != 0:
-                # print('cup has water: ', volume)
-                if abs(target - volume) > target:
-                    break
-                target -= volume
-                estimate += 1       # add a step for transferring between cup and solution
-
-        # get the pitcher closest to the goal
         closest, closest_index = util.find_closest(self.env.pitchers, target)
         multiple: int = util.closest_multiple(closest, target)
 
         # add 2 steps for each multiple (1 to fill, 1 to transfer)
         estimate += multiple*2
 
-        # remove a step if the cup is already full
-        if self.env.volumes[closest_index] > 0:
+        # now subtract steps for pitchers that are already filled
+        # subtract a step if cup to use is already filled
+        if state[closest_index] > 0:
             estimate -= 1
 
-        # if the target quantity isn't reached exactly, add (ideally) only 1 step to
-        # transfer in/out the remaining amount
-        if abs(target - closest*multiple) != 0:
-            estimate += 1
+        # add 1 step for each filled pitcher (prioritize transferring to goal state)
+        for i, amount in enumerate(state[:-2]):
+            if amount > 0:
+                estimate += 1
 
-        # goal = self.env.goal
-        # total = np.sum(state)
-        # diffs = abs(state - goal)
-        # return min(diffs) + (0.2 * total)
+            # check for exact solution
+            if target - self.env.pitchers[i] == 0:
+                return 1
+
         return estimate
 
-#     def get_h(self, state) -> float:
-#         goal = self.goal
-#         total = np.sum(state)
-#         diffs = abs(state - goal)
-#         return np.min(diffs)
-
-
-    
     def step(self, naive=True) -> bool:
         if not self.runnable:
             return True
@@ -154,7 +118,6 @@ class AStar:
             del self.open_dict[hash(q)]
         except:
             pass
-
 
         if hash(q) in self.closed and self.closed[hash(q)].g > q.f:
             self.closed[hash(q)] = q
@@ -196,7 +159,6 @@ class AStar:
             else:
                 self.closed[hash(to_add)] = to_add
 
-        
         # self.close_stale()
         if self.iterations % 1000 == 0:
             open_delta, closed_delta = len(self.open) - self.previous[0], len(self.closed) - self.previous[1]

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Environment:
     def __init__(self, pitchers, goal):
         self.pitchers = pitchers
@@ -8,9 +9,7 @@ class Environment:
 
         self.volumes = np.zeros(len(pitchers) + 1)
 
-
     def propagate(self, volumes= None, steps = None):
-
         if not volumes is None and not steps is None:
             self.load_env_state(volumes,steps)
         
@@ -60,7 +59,6 @@ class Environment:
     def load_env_state(self, volumes, steps):
         self.volumes = volumes
         self.steps = steps
-
 
     def get_state(self):
         state = self.volumes.copy()
