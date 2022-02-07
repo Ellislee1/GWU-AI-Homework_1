@@ -2,6 +2,7 @@ import numpy as np
 from math import gcd
 from functools import reduce
 from typing import Tuple
+import numba as nb
 
 
 def is_valid_problem(pitchers: np.array, target: int) -> bool:
@@ -21,7 +22,7 @@ def is_valid_problem(pitchers: np.array, target: int) -> bool:
     # problem is valid if the target is a multiple of the gcd
     return target % x == 0
 
-
+@nb.njit(nogil=True)
 def find_closest(volumes: np.array, target: int) -> Tuple[int, int]:
     """Returns the volume of water that is closest to the target value, and the index of that pitcher in the array"""
     closest = volumes[0]
@@ -37,7 +38,9 @@ def find_closest(volumes: np.array, target: int) -> Tuple[int, int]:
 
     return closest, index
 
-
+@nb.njit(nogil=True)
 def closest_multiple(pitcher: int, target: int) -> int:
     """Returns the closest multiple of the pitcher to the target"""
+    if pitcher == 0:
+        return 0
     return round(target / pitcher)
