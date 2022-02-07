@@ -91,9 +91,9 @@ class AStar:
         target = self.env.goal - state[-1]
         estimate = 0
 
+        # goal pitcher is overflowed: (ideal case) just pour out exact excess into another cup
         if target < 0:
-            estimate = 1
-            return estimate
+            return 1
 
         closest, closest_index = util.find_closest(self.env.pitchers, target)
         multiple: int = util.closest_multiple(closest, target)
@@ -102,6 +102,7 @@ class AStar:
         estimate += multiple*2
 
         # now subtract steps for pitchers that are already filled
+        # subtract a step if cup to use is already filled
         if state[closest_index] > 0:
             estimate -= 1
 
@@ -110,10 +111,9 @@ class AStar:
             if amount > 0:
                 estimate += 1
 
-            # if 1 of the pitchers matches the remaining amount, use that
+            # check for exact solution
             if target - self.env.pitchers[i] == 0:
-                estimate = 1
-                return estimate
+                return 1
 
         return estimate
 
