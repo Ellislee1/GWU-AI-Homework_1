@@ -1,4 +1,5 @@
 import numpy as np
+import heapq
 
 import util
 from Environment import Environment as Env
@@ -19,22 +20,48 @@ class Node:
 
         if isinstance(__o, Node):
             return (__o.state[:-1] == self.state[:-1]).all()
-
+        
         return False
-
+    
+    def __lt__(self, __o: object) -> bool:
+        if isinstance(__o, Node):
+             return __o.f < self.f        
+        return False
+    
+    def __hash__(self):
+        _str = ""
+        for i in range(len(self.state[:-1])):
+            _str += str(int(self.state[i]))
+        return int(_str)
 
 class AStar:
     def __init__(self, env: Env):
         self.env = env
         self.open = []
-        self.closed = []
+        self.open_dict = {}
+        self.closed = {}
 
-        self.open.append(Node(self.env.get_state(), None))
-        # self.open.append(Node([0,8,0,1], self.open[0]))
+        n = Node(self.env.get_state(), None)
+        heapq.heappush(self.open, n)
+        self.open_dict[hash(n)] = n
         self.empty = False
         self.success = None
-        self.lower = np.inf
-        self.total_explored = 99
+        self.lower = None
+        self.goal = self.env.goal
+        self.iterations = 0
+
+        self.previous = np.zeros(2)
+
+        self.initilise()
+    
+    def initilise(self):
+        pitchers = self.env.pitchers
+        gcd = np.gcd.reduce(pitchers)
+        
+        if gcd <= self.goal and self.goal % gcd == 0:
+            self.runnable = True
+        else:
+            self.runnable = False
 
     def print_path(self):
         path = []
@@ -49,7 +76,7 @@ class AStar:
 
     def get_steps(self) -> int:
         if self.success is None:
-            return -1
+            return None
         return self.success.g
 
     def list_open(self):
@@ -59,6 +86,7 @@ class AStar:
     def list_closed(self):
         for node in self.closed:
             print(node)
+
 
     def get_h(self, state) -> int:
         target = self.env.goal - self.env.volumes[-1]
@@ -107,23 +135,33 @@ class AStar:
         # return min(diffs) + (0.2 * total)
         return estimate
 
+#     def get_h(self, state) -> float:
+#         goal = self.goal
+#         total = np.sum(state)
+#         diffs = abs(state - goal)
+#         return np.min(diffs)
+
+
+    
     def step(self, naive=True) -> bool:
+        if not self.runnable:
+            return True
+
         if len(self.open) <= 0:
             return True
 
-        # Get lowest f
-        low_index, low_f = 0, self.open[0].f
+        q = heapq.heappop(self.open)
+        try:
+            del self.open_dict[hash(q)]
+        except:
+            pass
 
-        if len(self.open) > 1:
-            for i in range(1, len(self.open)):
-                new_f = self.open[i].f
-                if new_f < low_f:
-                    low_f = new_f
-                    low_index = i
 
-        # print(f'low index: {low_index}, low_f: {low_f}')
-        q = self.open.pop(low_index)
-        # print("q: ", q)
+        if hash(q) in self.closed and self.closed[hash(q)].g > q.f:
+            self.closed[hash(q)] = q
+        elif not q in self.closed:
+            self.closed[hash(q)] = q
+            
         # Generate Q's successors
         successors = self.env.propagate(q.state[:-1], q.state[-1])
         # Add to open
@@ -136,45 +174,56 @@ class AStar:
                 if naive:
                     self.success = val
                     return True
-                # print(val, self.lower, val < self.lower)
-                if val.g < self.lower:
+                if self.lower is None or val.g < self.lower:
                     self.success = val
                     self.lower = val.g
 
             to_add = Node(state, q, self.get_h(state[:-1]))
             skip = False
-            for i in range(len(self.open)):
-                if self.open[i] == to_add and self.open[i].f <= to_add.f:
-                    skip = True
-                    break
-            if skip:
+
+            if hash(to_add) in self.open_dict and self.open_dict[hash(to_add)].g < q.f:
                 continue
 
-            for i in range(len(self.closed)):
-                if self.closed[i] == to_add and self.closed[i].f <= to_add.f:
-                    skip = True
-                    break
-            if skip:
+
+            if hash(to_add) in self.closed and self.closed[hash(to_add)].g < q.f:
+            # if self.closed[i] == to_add and self.closed[i].g < to_add.f:
                 continue
-            self.open.append(to_add)
-            self.closed.append(q)
-        self.close_stale()
-        if len(self.closed) % 100 == 0:
-            print(f"Explored {len(self.closed)}")
+            
+            if self.lower is None or to_add.f < self.lower:
+                heapq.heappush(self.open, to_add)
+                self.open_dict[hash(to_add)] = to_add
+            else:
+                self.closed[hash(to_add)] = to_add
+
+        
+        # self.close_stale()
+        if self.iterations % 1000 == 0:
+            open_delta, closed_delta = len(self.open) - self.previous[0], len(self.closed) - self.previous[1]
+            self.previous[0], self.previous[1] =  len(self.open),  len(self.closed)
+            print(f"Iteration:{self.iterations}: Closed branches =  {len(self.closed)} [{closed_delta}]| Open branches =  {len(self.open)} [{open_delta}]")
+        self.iterations += 1
         return len(self.open) <= 0
 
     def close_stale(self):
-        if self.lower == np.inf:
+        if self.lower == None:
             return
 
         new_open = []
+        new_open_dict = {}
+
         for node in self.open:
-            if node.g <= self.lower:
-                new_open.append(node)
+            if node.f < self.lower and not hash(node) in self.closed:
+                heapq.heappush(new_open, node)
+                new_open_dict[hash(node)] = node
             else:
-                self.closed.append(node)
+                if hash(node) in self.closed and self.closed[hash(node)].g > node.f:
+                    self.closed[hash(node)] = node
+                elif not node in self.closed:
+                    self.closed[hash(node)] = node
+                # self.closed.add(node)
 
         self.open = new_open.copy()
+        self.open_dict = new_open_dict
         # print(len(self.open), len(self.closed), self.lower)
 
     def check_finished(self, state) -> bool:
@@ -188,9 +237,8 @@ class AStar:
             self.empty = self.step(naive)
 
     def clear_up(self, poss):
-
         node = poss
-        self.closed.append(node)
+        self.closed[hash(node)] = node
         success_index = np.where(node.state[:-1] == self.env.goal)[0]
 
         # print(node.state[:-1][-1], self.env.goal)
@@ -200,12 +248,12 @@ class AStar:
                 new_state[-2] = 0
                 new_state[-1] += 1
                 node = Node(new_state, node)
-                self.closed.append(node)
+                self.closed[hash(node)] = node
 
             new_state[-2] = self.env.goal
             new_state[-1] += 1
             new_state[success_index] = 0
             node = Node(new_state, node)
-            self.closed.append(node)
+            self.closed[hash(node)] = node
 
         return node
