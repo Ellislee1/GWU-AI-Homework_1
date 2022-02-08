@@ -7,7 +7,7 @@ import time
 
 
 default_path = "Files/test3.txt"
-default_naive = True
+default_naive = False
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Pitcher files')

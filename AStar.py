@@ -37,7 +37,6 @@ def get_h(state, goal: int, pitchers) -> int:
         if i != closest_index and amount > 0:
             # avoid double counting ideal (closest) pitcher
             estimate += 1
-            break
 
     return estimate
 
@@ -120,8 +119,6 @@ class AStar:
             print(node)
 
     def step(self, naive=False) -> bool:
-        if not util.is_valid_problem(self.env.pitchers, self.goal):
-            return True
         if len(self.open) <= 0:
             return True
 
@@ -185,9 +182,11 @@ class AStar:
         return state[-2] == self.env.goal
 
     def run(self, naive=False):
-        while not self.empty:
-            self.empty = self.step(naive)
-        print(f"\t\t\t\t\t\t\t\nIteration {self.iterations}: Closed branches =  {len(self.closed)}| Open branches =  {len(self.open)}\t\t\t\t\t\t\t\t\t")
+        if util.is_valid_problem(self.env.pitchers, self.goal):
+            while not self.empty:
+                self.empty = self.step(naive)
+            print(f"\t\t\t\t\t\t\t\nIteration {self.iterations}: Closed branches =  {len(self.closed)}| "
+                  f"Open branches =  {len(self.open)}\t\t\t\t\t\t\t\t\t")
 
     def clear_up(self, poss):
         node = poss
