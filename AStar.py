@@ -44,7 +44,7 @@ def get_h(state, goal: int, pitchers) -> int:
             estimate += 1
 
 
-    return estimate+math.ceil(np.min(goal-state)/10)
+    return estimate+math.floor(np.min(goal-state)/10)
     
 
 
