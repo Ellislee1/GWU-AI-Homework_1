@@ -7,7 +7,7 @@ from Environment import Environment as Env
 
 
 @nb.njit(nogil=True)
-def get_h(state, goal:int, pitchers) -> int:
+def get_h(state, goal: int, pitchers) -> int:
     target = goal - state[-1]
     estimate = 0
 
@@ -15,24 +15,28 @@ def get_h(state, goal:int, pitchers) -> int:
     if target < 0:
         return 1
 
+    # find the pitcher closest to the target value
     closest, closest_index = util.find_closest(pitchers, target)
+    # get the multiple of that pitcher that gets closest to the target amount
     multiple: int = util.closest_multiple(closest, target)
 
     # add 2 steps for each multiple (1 to fill, 1 to transfer)
     estimate += multiple * 2
-
-    # subtract a step if cup to use is already filled
-    if state[closest_index] > 0:
+    # subtract a step if cup to use is already fully filled
+    if state[closest_index] == pitchers[closest_index]:
         estimate -= 1
 
     # add 1 step for each filled pitcher (prioritize transferring to goal state)
     for i, amount in enumerate(state[:-1]):
-        if amount > 0:
-            estimate += 1
-
         # check for exact solution
-        if target - pitchers[i] == 0:
+        if target - amount == 0:
             estimate -= 1
+            break
+
+        # penalize for unnecessarily filling other pitchers
+        if i != closest_index and amount > 0:
+            # avoid double counting ideal (closest) pitcher
+            estimate += 1
             break
 
     return estimate
@@ -62,7 +66,7 @@ class Node:
     
     def __gt__(self, __o: object) -> bool:
         if isinstance(__o, Node):
-             return __o.f < self.f 
+            return __o.f < self.f
     
     def __hash__(self):
         _str = ""
@@ -73,6 +77,8 @@ class Node:
 
 class AStar:
     def __init__(self, env: Env):
+        # suppress printing in scientific notation (easier to read for testing)
+        np.set_printoptions(suppress=True)
         self.env = env
         self.open = []
         self.open_dict = {}
@@ -114,7 +120,6 @@ class AStar:
             print(node)
 
     def step(self, naive=True) -> bool:
-
         if len(self.open) <= 0:
             return True
 
@@ -148,12 +153,14 @@ class AStar:
                     self.success = val
                     self.lower = val.g
 
-            to_add = Node(state, q, get_h(state[:-1], self.goal,self.env.pitchers))
+            to_add = Node(state, q, get_h(state[:-1], self.goal, self.env.pitchers))
             skip = False
 
+            # Duplicate state detection:
+            # check if the current state is in the queue to be explored with a lesser score
             if hash(to_add) in self.open_dict and self.open_dict[hash(to_add)].f <= to_add.f:
                 continue
-
+            # Check if the current state has already been visited before (with a smaller score)
             if hash(to_add) in self.closed and self.closed[hash(to_add)].f <= to_add.f:
                 continue
             
@@ -172,9 +179,8 @@ class AStar:
         return len(self.open) <= 0
 
     def check_finished(self, state) -> bool:
-        for elem in state[:-1]:
-            if elem == self.env.goal:
-                return True
+        # see if the infinite cup has teh desired quantity
+        return state[-2] == self.env.goal
 
     def run(self, naive=True):
         while not self.empty:
