@@ -1,5 +1,6 @@
 import numpy as np
 from math import gcd
+import math
 from functools import reduce
 from typing import Tuple
 import numba as nb
@@ -26,18 +27,11 @@ def is_valid_problem(pitchers: np.array, target: int) -> bool:
 @nb.njit(nogil=True)
 def find_closest(pitchers: np.array, target: int) -> Tuple[int, int]:
     """Returns the pitcher that is closest to the target value, and the index of that pitcher in the array"""
-    closest = pitchers[0]
-    index = 0
-    smallest_diff = abs(target - pitchers[0])
 
-    for (i, pitcher) in enumerate(pitchers):
-        diff = abs(target - pitcher)
-        if diff < smallest_diff:
-            closest = pitcher
-            smallest_diff = diff
-            index = i
+    smallest_diff = np.abs(target - pitchers)
+    index = np.argmin(smallest_diff)
 
-    return closest, index
+    return pitchers[index], index
 
 
 @nb.njit(nogil=True)
@@ -45,4 +39,4 @@ def closest_multiple(pitcher: int, target: int) -> int:
     """Returns the closest multiple of the pitcher to the target"""
     if pitcher == 0:
         return 0
-    return round(target / pitcher)
+    return math.ceil(target / pitcher)

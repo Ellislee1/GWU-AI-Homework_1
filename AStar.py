@@ -1,6 +1,7 @@
 import numpy as np
 import heapq
 import numba as nb
+import math
 
 import util
 from Environment import Environment as Env
@@ -8,11 +9,14 @@ from Environment import Environment as Env
 
 @nb.njit(nogil=True)
 def get_h(state, goal: int, pitchers) -> int:
-    target = goal - state[-1]
+    if goal > np.max(pitchers):
+        target = goal - state[-1]
+    else:
+        target = np.min(goal-state)
     estimate = 0
 
     # goal pitcher is overflowed: (ideal case) just pour out exact excess into another cup
-    if target < 0:
+    if target <= 0:
         return 1
 
     # find the pitcher closest to the target value
@@ -27,17 +31,25 @@ def get_h(state, goal: int, pitchers) -> int:
         estimate -= 1
 
     # add 1 step for each filled pitcher (prioritize transferring to goal state)
+    # min_diff = min(goal - state[:closest_index:-1])
+    # estimate -= min_diff
     for i, amount in enumerate(state[:-1]):
         # check for exact solution
-        if target - amount == 0:
-            estimate -= 1
+        if target - amount ==0:
+            return 1
 
         # penalize for unnecessarily filling other pitchers
-        if i != closest_index and amount > 0:
+        if i != closest_index and amount > 0 and state[closest_index] == pitchers[closest_index]:
             # avoid double counting ideal (closest) pitcher
             estimate += 1
 
-    return estimate
+
+    return estimate+math.ceil(np.min(goal-state)/10)
+    
+
+
+
+
 
 class Node:
     def __init__(self, state, parent, h=0):
@@ -68,10 +80,9 @@ class Node:
     def __hash__(self):
         _str = str(int(np.sum(self.state[:-1])))
         for i in range(len(self.state[:-1])):
-            _str += str(int(self.state[i])*51)
+            _str += f'_{str(int(self.state[i]))}'
         
-        return int(_str)
-
+        return hash(_str)
 
 class AStar:
     def __init__(self, env: Env):

@@ -49,7 +49,7 @@ class EnvironmentTests(unittest.TestCase):
         env = Env(pitchers,goal)
         a = A(env)
         a.run()
-        self.assertEqual(a.get_steps(),4)
+        self.assertEqual(a.get_steps(),3)
 
     def test_4(self): 
         # transfer twice w/ inbetween goal
@@ -103,7 +103,7 @@ class EnvironmentTests(unittest.TestCase):
        env = Env(pitchers,goal)
        a = A(env)
        a.run(naive = True)
-       self.assertEqual(a.get_steps(),4)
+       self.assertEqual(a.get_steps(),3)
 
     def test_10(self): # 6*9 + 4 + 3 
        # 5 pitcher - long time test
