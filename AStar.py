@@ -1,14 +1,22 @@
-import numpy as np
 import heapq
-import numba as nb
 import math
+
+import numba as nb
+import numpy as np
 
 import util
 from Environment import Environment as Env
 
-
+"""
+    Gets the heuristic value (h) for a given state and goal.
+"""
 @nb.njit(nogil=True)
 def get_h(state, goal: int, pitchers) -> int:
+    """
+        If the value of the goal is greater than the largest pitcher then
+        we only care about the value in the largest pitcher for our target.
+        Otherwise, we care about the entire state space (overfill strategy considered).
+    """
     if goal > np.max(pitchers):
         target = goal - state[-1]
     else:
@@ -31,8 +39,6 @@ def get_h(state, goal: int, pitchers) -> int:
         estimate -= 1
 
     # add 1 step for each filled pitcher (prioritize transferring to goal state)
-    # min_diff = min(goal - state[:closest_index:-1])
-    # estimate -= min_diff
     for i, amount in enumerate(state[:-1]):
         # check for exact solution
         if target - amount ==0:
@@ -43,14 +49,20 @@ def get_h(state, goal: int, pitchers) -> int:
             # avoid double counting ideal (closest) pitcher
             estimate += 1
 
-
+    # div 10 is normalisation for the floor consideration. This assumes we take
+    # the step that brings use closest to the target.
     return estimate+math.floor(np.min(goal-state)/10)
     
 
 
-
-
-
+"""
+    A node in the A* graph.
+        - state:        The current state ([<volumes>,steps])
+        - parent:       The parent node that created this node
+        - g:            Total steps to this point
+        - h:            Heuristic value
+        - f:            Combination g+h
+"""
 class Node:
     def __init__(self, state, parent, h=0):
         self.state = np.copy(state)
@@ -78,19 +90,34 @@ class Node:
             return __o.f < self.f
     
     def __hash__(self):
+        """Has function for accessing state in dictionaries"""
         _str = str(int(np.sum(self.state[:-1])))
         for i in range(len(self.state[:-1])):
             _str += f'_{str(int(self.state[i]))}'
         
         return hash(_str)
 
+"""
+    A* Algorithm, using 'get_h()' lower bound.
+    - env:          The environment to control the pitcher propergation
+    - open:         Min-heap (f) on open states
+    - open_dict:    An unorderd dictionary of the open hashes, 
+                    used for quick access over the heap
+    - closed:       An unorordered dictionary of all closed states
+    - empty:        Flag for if the open dictionaty is empty 
+                    (Used in single step operation only)
+    - success:      The best successful terminal state
+    - lower:        The g of the best current state (current lb)
+    - goal:         The goal value
+    - iterations:   A counter of iterations used for verbose output
+"""
 class AStar:
     def __init__(self, env: Env):
         # suppress printing in scientific notation (easier to read for testing)
         np.set_printoptions(suppress=True)
         self.env = env
         self.open = []
-        self.open_dict = {}
+        self.open_dict = dict()
         self.closed = {}
 
         n = Node(self.env.get_state(), None)
@@ -103,30 +130,6 @@ class AStar:
         self.iterations = 0
 
         self.previous = np.zeros(2)
-
-    def print_path(self):
-        path = []
-
-        n = self.success
-
-        while n is not None:
-            path.insert(0, n.state[:-1])
-            n = n.parent
-
-        print(path)
-
-    def get_steps(self) -> int:
-        if self.success is None:
-            return -1
-        return self.success.g
-
-    def list_open(self):
-        for node in self.open:
-            print(node)
-
-    def list_closed(self):
-        for node in self.closed:
-            print(node)
 
     def step(self, naive=False) -> bool:
         if len(self.open) <= 0:
@@ -190,6 +193,28 @@ class AStar:
             print(f"Iteration {self.iterations}: Closed branches =  {len(self.closed)} [{int(closed_delta)}]| Open branches =  {len(self.open)} [{int(open_delta)}]\t\t\t\t\t\t\t\t\t\t\t\t\t\t\r", end="")
         self.iterations += 1
         return len(self.open) <= 0
+
+    def print_path(self):
+        path = []
+        n = self.success
+        while n is not None:
+            path.insert(0, n.state[:-1])
+            n = n.parent
+
+        print(np.array(path))
+
+    def get_steps(self) -> int:
+        if self.success is None:
+            return -1
+        return self.success.g
+
+    def list_open(self):
+        for node in self.open:
+            print(node)
+
+    def list_closed(self):
+        for node in self.closed:
+            print(node)
 
     def check_finished(self, state) -> bool:
         # see if the infinite cup has teh desired quantity
