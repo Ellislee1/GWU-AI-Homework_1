@@ -12,7 +12,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 3
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive=True)
+        a.run()
         self.assertEqual(a.get_steps(),2)
 
     def test_0(self):
@@ -21,7 +21,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 6
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive=True)
+        a.run()
         self.assertEqual(a.get_steps(),4)
 
     def test_1(self):
@@ -30,7 +30,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 8
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run()
         self.assertEqual(a.get_steps(),5)
 
     def test_2(self):
@@ -97,7 +97,6 @@ class EnvironmentTests(unittest.TestCase):
         a.run()
         self.assertEqual(a.get_steps(),4)
 
- 
     def test_9(self): # (31-11) = 20 * 2
        pitchers = np.array([7,11,17,23,31,57])
        goal = 40
@@ -122,10 +121,7 @@ class EnvironmentTests(unittest.TestCase):
         env = Env(pitchers,goal)
         a = A(env)
         a.run()
-        self.assertEquals(a.get_steps(),None)
-
-
-
+        self.assertEquals(a.get_steps(),-1)
 
 
 if __name__ == "__main__":

@@ -22,14 +22,15 @@ def is_valid_problem(pitchers: np.array, target: int) -> bool:
     # problem is valid if the target is a multiple of the gcd
     return target % x == 0
 
-@nb.njit(nogil=True)
-def find_closest(volumes: np.array, target: int) -> Tuple[int, int]:
-    """Returns the volume of water that is closest to the target value, and the index of that pitcher in the array"""
-    closest = volumes[0]
-    index = 0
-    smallest_diff = abs(target - volumes[0])
 
-    for (i, pitcher) in enumerate(volumes):
+@nb.njit(nogil=True)
+def find_closest(pitchers: np.array, target: int) -> Tuple[int, int]:
+    """Returns the pitcher that is closest to the target value, and the index of that pitcher in the array"""
+    closest = pitchers[0]
+    index = 0
+    smallest_diff = abs(target - pitchers[0])
+
+    for (i, pitcher) in enumerate(pitchers):
         diff = abs(target - pitcher)
         if diff < smallest_diff:
             closest = pitcher
@@ -37,6 +38,7 @@ def find_closest(volumes: np.array, target: int) -> Tuple[int, int]:
             index = i
 
     return closest, index
+
 
 @nb.njit(nogil=True)
 def closest_multiple(pitcher: int, target: int) -> int:

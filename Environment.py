@@ -9,13 +9,13 @@ class Environment:
 
         self.volumes = np.zeros(len(pitchers) + 1)
 
-    def propagate(self, volumes= None, steps = None):
-        if not volumes is None and not steps is None:
-            self.load_env_state(volumes,steps)
+    def propagate(self, volumes=None, steps=None):
+        if volumes is not None and steps is not None:
+            self.load_env_state(volumes, steps)
         
         new_states = []
 
-        # All Filling states, this ignores filling the infinate pitcher
+        # All Filling states, this ignores filling the infinite pitcher
         for i in range(len(self.pitchers)):
             if self.volumes[i] == self.pitchers[i]:
                 continue

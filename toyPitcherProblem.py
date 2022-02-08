@@ -7,7 +7,7 @@ import time
 
 
 default_path = "Files/test3.txt"
-default_naive = True
+default_naive = False
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Pitcher files')
@@ -18,25 +18,26 @@ if __name__ == "__main__":
     p = Parser()
     args = parser.parse_args()
 
-    file = args.file if not args.file is None else default_path
+    file = args.file if args.file is not None else default_path
 
     pitchers, goal = p.parse(file)
-    assert util.is_valid_problem(pitchers, goal)
+    if util.is_valid_problem(pitchers, goal):
+        env = Env(pitchers, goal)
 
-    env = Env(pitchers, goal)
+        a = A(env)
 
-    a = A(env)
-
-    if args.naive.title() == "True":
-        start = time.perf_counter()
-        a.run(naive=True)
-    elif args.naive.title() == "False":
-        start = time.perf_counter()
-        a.run(naive=False)
+        if args.naive.title() == "True":
+            start = time.perf_counter()
+            a.run(naive=True)
+        elif args.naive.title() == "False":
+            start = time.perf_counter()
+            a.run(naive=False)
+        else:
+            start = time.perf_counter()
+            a.run(naive=default_naive)
+        end = time.perf_counter()
+        if args.path.title() == "True":
+            a.print_path()
+        print(f'Path found takes: {a.get_steps()} steps (That took {(end-start):.3g} seconds)')
     else:
-        start = time.perf_counter()
-        a.run(naive=default_naive)
-    end = time.perf_counter()
-    if args.path.title() == "True":
-        a.print_path()
-    print(f'Path found takes: {a.get_steps()} steps (That took {(end-start):.3g} seconds)')
+        print(f'Path found takes: -1 steps (No solution possible)')
