@@ -119,7 +119,9 @@ class AStar:
         for node in self.closed:
             print(node)
 
-    def step(self, naive=True) -> bool:
+    def step(self, naive=False) -> bool:
+        if not util.is_valid_problem(self.env.pitchers, self.goal):
+            return True
         if len(self.open) <= 0:
             return True
 
@@ -130,7 +132,7 @@ class AStar:
         except:
             pass
 
-        if hash(q) in self.closed and self.closed[hash(q)].g > q.f:
+        if hash(q) in self.closed and self.closed[hash(q)].g > q.g:
             self.closed[hash(q)] = q
         elif q not in self.closed:
             self.closed[hash(q)] = q
@@ -182,7 +184,7 @@ class AStar:
         # see if the infinite cup has teh desired quantity
         return state[-2] == self.env.goal
 
-    def run(self, naive=True):
+    def run(self, naive=False):
         while not self.empty:
             self.empty = self.step(naive)
         print(f"\t\t\t\t\t\t\t\nIteration {self.iterations}: Closed branches =  {len(self.closed)}| Open branches =  {len(self.open)}\t\t\t\t\t\t\t\t\t")
