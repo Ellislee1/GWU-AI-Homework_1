@@ -98,22 +98,22 @@ class EnvironmentTests(unittest.TestCase):
         self.assertEqual(a.get_steps(),4)
 
  
- #   def test_9(self): # (31-11) = 20 * 2
- #       pitchers = np.array([7,11,17,23,31,57])
- #       goal = 40
- #       env = Env(pitchers,goal)
- #       a = A(env)
- #       a.run(naive = True)
- #       self.assertEqual(a.get_steps(),3)
+    def test_9(self): # (31-11) = 20 * 2
+       pitchers = np.array([7,11,17,23,31,57])
+       goal = 40
+       env = Env(pitchers,goal)
+       a = A(env)
+       a.run(naive = True)
+       self.assertEqual(a.get_steps(),4)
 
-#    def test_10(self): # 6*9 + 4 + 3 
-#        # 5 pitcher - long time test
-#        pitchers = np.array([1,2,3,4,6])
-#        goal = 61
-#        env = Env(pitchers,goal)
-#        a = A(env)
-#        a.run(naive = True)
-#        self.assertEquals(a.get_steps(),22)
+    def test_10(self): # 6*9 + 4 + 3 
+       # 5 pitcher - long time test
+       pitchers = np.array([1,2,3,4,6])
+       goal = 61
+       env = Env(pitchers,goal)
+       a = A(env)
+       a.run(naive = True)
+       self.assertEquals(a.get_steps(),22)
 
     def test_11(self):
         # 4 Pitcher - No solution

@@ -35,7 +35,6 @@ def get_h(state, goal:int, pitchers) -> int:
 
     return estimate
 
-
 class Node:
     def __init__(self, state, parent, h=0):
         self.state = np.copy(state)
@@ -63,9 +62,10 @@ class Node:
              return __o.f < self.f 
     
     def __hash__(self):
-        _str = ""
+        _str = str(int(np.sum(self.state[:-1])))
         for i in range(len(self.state[:-1])):
-            _str += str(int(self.state[i]))
+            _str += str(int(self.state[i])*51)
+        
         return int(_str)
 
 class AStar:
@@ -151,10 +151,14 @@ class AStar:
             skip = False
 
             if hash(to_add) in self.open_dict and self.open_dict[hash(to_add)].f <= to_add.f:
+                if not(to_add.state[:-1] == self.open_dict[hash(to_add)].state[:-1]).all():
+                    print(to_add.state[:-1], self.open_dict[hash(to_add)].state[:-1])
                 continue
 
 
             if hash(to_add) in self.closed and self.closed[hash(to_add)].f <= to_add.f:
+                if not(to_add.state[:-1] == self.closed[hash(to_add)].state[:-1]).all():
+                    print(to_add.state[:-1], self.closed[hash(to_add)].state[:-1])
                 continue
             
             if self.lower is None or to_add.f < self.lower:
