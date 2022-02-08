@@ -7,12 +7,11 @@ import time
 
 
 default_path = "Files/test3.txt"
-default_naive = False
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Pitcher files')
     parser.add_argument('--file' , dest='file', type=str, help='Path to the input file')
-    parser.add_argument('--naive' , dest='naive', type=str, help='Should the algorithm run naively')
+    parser.add_argument('--naive' , dest='naive', type=str, help='Should the algorithm run naively', default = "False")
     parser.add_argument('--path' , dest='path', type=str, help='Should the algorithm run naively', default="False")
 
     p = Parser()
