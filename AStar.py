@@ -77,7 +77,7 @@ class Node:
     def __eq__(self, __o: object) -> bool:
 
         if isinstance(__o, Node):
-            return (__o.state[:-1] == self.state[:-1]).all()
+            return (__o.g == self.g).all()
         
         return False
     
@@ -88,6 +88,10 @@ class Node:
     def __gt__(self, __o: object) -> bool:
         if isinstance(__o, Node):
             return __o.f < self.f
+    
+    def __le__(self, __o: object) -> bool:
+         if isinstance(__o, Node):
+            return __o.g < self.g
     
     def __hash__(self):
         """Has function for accessing state in dictionaries"""
@@ -122,6 +126,7 @@ class AStar:
 
         n = Node(self.env.get_state(), None)
         heapq.heappush(self.open, n)
+
         self.open_dict[hash(n)] = n
         self.empty = False
         self.success = None
@@ -131,28 +136,57 @@ class AStar:
 
         self.previous = np.zeros(2)
 
+        # initial check to see if in the end state
+        if self.check_finished(n.state):
+            val = self.clear_up(n)
+            if self.lower is None or val.n < self.lower:
+                self.success = val
+                self.lower = val.g
+
     def step(self, naive=False) -> bool:
+        """
+            Steps through throught the algorithm
+        """
+
+        # Ensure there is values in the open list
         if len(self.open) <= 0:
             return True
 
         # get min-cost state from min-heap
         q = heapq.heappop(self.open)
+
+        # Handle phantom edge case, rarely called, does not affect code progression
         try:
             del self.open_dict[hash(q)]
         except:
             pass
-
-        if hash(q) in self.closed and self.closed[hash(q)].g > q.g:
-            self.closed[hash(q)] = q
-        elif q not in self.closed:
+        
+        # Handle adding q to the closed list
+        if (hash(q) in self.closed and self.closed[hash(q)].g > q.g) or q not in self.closed:
             self.closed[hash(q)] = q
         
-        if self.lower is not None and self.lower <= q.f:
-            self.iterations += 1
+        # Make sure that the current q.g is less than the lower value
+        if self.lower is not None and self.lower <= q.g:
+            self.end_iter()
             return len(self.open) <= 0
             
         # Generate Q's successors
-        successors = self.env.propagate(q.state[:-1], q.state[-1])
+        successors = np.array(self.env.propagate(q.state[:-1], q.state[-1]))
+
+        # Trim everything if the lower bound already exists
+        if self.lower is not None:
+            try:
+                successors_n = successors[np.where(np.array(successors)[:,-1] < self.lower)[0]]
+                successors = successors_n
+            except:
+                # Check to see if trimmed values can be added to the closed dict
+                for state in successors:
+                    to_add = Node(state, q, get_h(state[:-1], self.goal, self.env.pitchers))
+                    if (hash(q) in self.closed and self.closed[hash(q)].g > q.g) or q not in self.closed:
+                        self.closed[hash(q)] = q
+                self.end_iter()
+                return len(self.open) <= 0
+
         # Add to open
         for state in successors:
             to_add = Node(state, q, get_h(state[:-1], self.goal, self.env.pitchers))
@@ -164,35 +198,31 @@ class AStar:
                 if self.lower is None or val.g < self.lower:
                     self.success = val
                     self.lower = val.g
-
-            to_add = Node(state, q, get_h(state[:-1], self.goal, self.env.pitchers))
-            skip = False
+                    self.end_iter()
+                    return len(self.open) <= 0
 
             # Duplicate state detection:
             # check if the current state is in the queue to be explored with a lesser score
-            if hash(to_add) in self.open_dict and self.open_dict[hash(to_add)].f <= to_add.f:
-                if not(to_add.state[:-1] == self.open_dict[hash(to_add)].state[:-1]).all():
-                    print(to_add.state[:-1], self.open_dict[hash(to_add)].state[:-1])
+            if hash(to_add) in self.open_dict and self.open_dict[hash(to_add)].g <= to_add.g:
                 continue
             # Check if the current state has already been visited before (with a smaller score)
-            if hash(to_add) in self.closed and self.closed[hash(to_add)].f <= to_add.f:
-                if not(to_add.state[:-1] == self.closed[hash(to_add)].state[:-1]).all():
-                    print(to_add.state[:-1], self.closed[hash(to_add)].state[:-1])
+            if hash(to_add) in self.closed and self.closed[hash(to_add)].g <= to_add.g:
                 continue
             
-            if self.lower is None or to_add.f < self.lower:
-                heapq.heappush(self.open, to_add)
-                self.open_dict[hash(to_add)] = to_add
-            else:
-                self.closed[hash(to_add)] = to_add
 
-        # self.close_stale()
-        if self.iterations % 500 == 0:
+            heapq.heappush(self.open, to_add)
+            self.open_dict[hash(to_add)] = to_add
+
+
+        self.end_iter()
+        return len(self.open) <= 0
+    
+    def end_iter(self):
+        if self.iterations % 1000 == 0:
             open_delta, closed_delta = len(self.open) - self.previous[0], len(self.closed) - self.previous[1]
             self.previous[0], self.previous[1] =  len(self.open),  len(self.closed)
             print(f"Iteration {self.iterations}: Closed branches =  {len(self.closed)} [{int(closed_delta)}]| Open branches =  {len(self.open)} [{int(open_delta)}]\t\t\t\t\t\t\t\t\t\t\t\t\t\t\r", end="")
         self.iterations += 1
-        return len(self.open) <= 0
 
     def print_path(self):
         path = []

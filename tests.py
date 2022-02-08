@@ -1,5 +1,8 @@
 import unittest
+
 import numpy as np
+
+import util
 from AStar import AStar as A
 from Environment import Environment as Env
 
@@ -122,7 +125,7 @@ class EnvironmentTests(unittest.TestCase):
         env = Env(pitchers,goal)
         a = A(env)
         a.run(naive = False)
-        self.assertEquals(a.get_steps(),0)
+        self.assertEquals(a.get_steps(),-1)
 
     def test_12(self):
         # 4 Pitcher - 2 transfer no dump
@@ -131,7 +134,7 @@ class EnvironmentTests(unittest.TestCase):
         env = Env(pitchers,goal)
         a = A(env)
         a.run(naive = False)
-        self.assertEquals(a.get_steps(),5)
+        self.assertEquals(a.get_steps(),3)
 
     def test_13(self):
         # no step test
@@ -152,13 +155,12 @@ class EnvironmentTests(unittest.TestCase):
         self.assertEquals(a.get_steps(),7)
 
     def test_15(self):
-
         pitchers = np.array([2,51,99])
         goal = 77
         env = Env(pitchers, goal)
         a = A(env)
         a.run(naive = False)
-        self.assertEquals(a.get_steps(),5)
+        self.assertEquals(a.get_steps(),23)
 
     def test_16(self):
         pitchers = np.array([1,5,7])
@@ -174,7 +176,48 @@ class EnvironmentTests(unittest.TestCase):
         env = Env(pitchers, goal)
         a = A(env)
         a.run(naive = False)
-        self.assertEquals(a.get_steps(),15)
+        self.assertEqual(a.get_steps(),19)
+
+class UtilTests(unittest.TestCase):
+    def test_valid_problems(self):
+        self.assertTrue(util.is_valid_problem(np.array([2, 5]), 2))
+        self.assertTrue(util.is_valid_problem(np.array([1, 2]), 3))
+        self.assertTrue(util.is_valid_problem(np.array([4, 7]), 13))
+        self.assertTrue(util.is_valid_problem(np.array([6, 15, 10]), 7))
+
+
+    def test_invalid_problems(self):
+        self.assertFalse(util.is_valid_problem(np.array([3, 6]), 2))
+        self.assertFalse( util.is_valid_problem(np.array([2, 4, 6, 8]), 3))
+        self.assertFalse( util.is_valid_problem(np.array([6, 15, 12, 9, 24]), 1))
+        self.assertFalse( util.is_valid_problem([6], 5))
+
+
+    def test_closest_pitcher(self):
+        closest, index = util.find_closest(np.array([1, 2, 3, 4]), 5)
+        self.assertEquals(closest,4)
+        self.assertEquals(index,3)
+
+        closest, index = util.find_closest(np.array([15, 10, 5]), 14)
+        self.assertEquals(closest,15)
+        self.assertEquals(index,0)
+
+        closest, index = util.find_closest(np.array([3, 6]), 4)
+        self.assertEquals(closest,3)
+        self.assertEquals(index,0)
+
+        closest, index = util.find_closest(np.array([6, 4, 1]), 3)
+        self.assertEquals(closest,4)
+        self.assertEquals(index,1)
+
+
+    def test_closest_multiple(self):
+        self.assertEquals(util.closest_multiple(4, 12), 3)
+        self.assertEquals(util.closest_multiple(1, 5) , 5)
+        self.assertEquals(util.closest_multiple(4, 3), 1)
+        self.assertEquals(util.closest_multiple(5, 1), 0)
+        self.assertEquals(util.closest_multiple(7, 10), 1)
+        self.assertEquals(util.closest_multiple(7, 12), 2)
 
 
 
