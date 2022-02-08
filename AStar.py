@@ -5,36 +5,39 @@ import numba as nb
 import util
 from Environment import Environment as Env
 
+
 @nb.njit(nogil=True)
-def get_h(state, goal:int, pitchers) -> int:
+def get_h(state, goal: int, pitchers) -> int:
     target = goal - state[-1]
     estimate = 0
 
     # goal pitcher is overflowed: (ideal case) just pour out exact excess into another cup
     if target < 0:
         return 1
+
+    # find the pitcher closest to the target value
     closest, closest_index = util.find_closest(pitchers, target)
+    # get the multiple of that pitcher that gets closest to the target amount
     multiple: int = util.closest_multiple(closest, target)
 
     # add 2 steps for each multiple (1 to fill, 1 to transfer)
-    estimate += multiple*2
-
-    # now subtract steps for pitchers that are already filled
-    # subtract a step if cup to use is already filled
-    if state[closest_index] > 0:
+    estimate += multiple * 2
+    # subtract a step if cup to use is already fully filled
+    if state[closest_index] == pitchers[closest_index]:
         estimate -= 1
 
     # add 1 step for each filled pitcher (prioritize transferring to goal state)
     for i, amount in enumerate(state[:-1]):
-        if amount > 0:
+        # check for exact solution
+        if target - amount == 0:
+            estimate -= 1
+
+        # penalize for unnecessarily filling other pitchers
+        if i != closest_index and amount > 0:
+            # avoid double counting ideal (closest) pitcher
             estimate += 1
 
-        # check for exact solution
-        if target - pitchers[i] == 0:
-            return 1
-
     return estimate
-
 
 class Node:
     def __init__(self, state, parent, h=0):
@@ -45,7 +48,7 @@ class Node:
         self.f = self.g + self.h
 
     def __str__(self) -> str:
-        return f"{self.state}, {self.f}"
+        return f"{self.state}, f: {self.f}"
 
     def __eq__(self, __o: object) -> bool:
 
@@ -60,16 +63,20 @@ class Node:
     
     def __gt__(self, __o: object) -> bool:
         if isinstance(__o, Node):
-             return __o.f < self.f 
+            return __o.f < self.f
     
     def __hash__(self):
-        _str = ""
+        _str = str(int(np.sum(self.state[:-1])))
         for i in range(len(self.state[:-1])):
-            _str += str(int(self.state[i]))
+            _str += str(int(self.state[i])*51)
+        
         return int(_str)
+
 
 class AStar:
     def __init__(self, env: Env):
+        # suppress printing in scientific notation (easier to read for testing)
+        np.set_printoptions(suppress=True)
         self.env = env
         self.open = []
         self.open_dict = {}
@@ -99,7 +106,7 @@ class AStar:
 
     def get_steps(self) -> int:
         if self.success is None:
-            return None
+            return -1
         return self.success.g
 
     def list_open(self):
@@ -110,23 +117,23 @@ class AStar:
         for node in self.closed:
             print(node)
 
-    def step(self, naive=True) -> bool:
-
+    def step(self, naive=False) -> bool:
         if len(self.open) <= 0:
             return True
 
+        # get min-cost state from min-heap
         q = heapq.heappop(self.open)
         try:
             del self.open_dict[hash(q)]
         except:
             pass
 
-        if hash(q) in self.closed and self.closed[hash(q)].g > q.f:
+        if hash(q) in self.closed and self.closed[hash(q)].g > q.g:
             self.closed[hash(q)] = q
-        elif not q in self.closed:
+        elif q not in self.closed:
             self.closed[hash(q)] = q
         
-        if not self.lower is None and self.lower <= q.f:
+        if self.lower is not None and self.lower <= q.f:
             self.iterations += 1
             return len(self.open) <= 0
             
@@ -144,14 +151,19 @@ class AStar:
                     self.success = val
                     self.lower = val.g
 
-            to_add = Node(state, q, get_h(state[:-1], self.goal,self.env.pitchers))
+            to_add = Node(state, q, get_h(state[:-1], self.goal, self.env.pitchers))
             skip = False
 
+            # Duplicate state detection:
+            # check if the current state is in the queue to be explored with a lesser score
             if hash(to_add) in self.open_dict and self.open_dict[hash(to_add)].f <= to_add.f:
+                if not(to_add.state[:-1] == self.open_dict[hash(to_add)].state[:-1]).all():
+                    print(to_add.state[:-1], self.open_dict[hash(to_add)].state[:-1])
                 continue
-
-
+            # Check if the current state has already been visited before (with a smaller score)
             if hash(to_add) in self.closed and self.closed[hash(to_add)].f <= to_add.f:
+                if not(to_add.state[:-1] == self.closed[hash(to_add)].state[:-1]).all():
+                    print(to_add.state[:-1], self.closed[hash(to_add)].state[:-1])
                 continue
             
             if self.lower is None or to_add.f < self.lower:
@@ -169,15 +181,15 @@ class AStar:
         return len(self.open) <= 0
 
     def check_finished(self, state) -> bool:
-        for elem in state[:-1]:
-            if elem == self.env.goal:
-                return True
+        # see if the infinite cup has teh desired quantity
+        return state[-2] == self.env.goal
 
-
-    def run(self, naive=True):
-        while not self.empty:
-            self.empty = self.step(naive)
-        print(f"\t\t\t\t\t\t\t\nIteration {self.iterations}: Closed branches =  {len(self.closed)}| Open branches =  {len(self.open)}\t\t\t\t\t\t\t\t\t")
+    def run(self, naive=False):
+        if util.is_valid_problem(self.env.pitchers, self.goal):
+            while not self.empty:
+                self.empty = self.step(naive)
+            print(f"\t\t\t\t\t\t\t\nIteration {self.iterations}: Closed branches =  {len(self.closed)}| "
+                  f"Open branches =  {len(self.open)}\t\t\t\t\t\t\t\t\t")
 
     def clear_up(self, poss):
         node = poss

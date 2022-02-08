@@ -10,9 +10,10 @@ def test_valid_problems():
 
 
 def test_invalid_problems():
-    assert util.is_valid_problem(np.array([3, 6]), 2) == False
-    assert util.is_valid_problem(np.array([2, 4, 6, 8]), 3) == False
-    assert util.is_valid_problem(np.array([6, 15, 12, 9, 24]), 1) == False
+    assert util.is_valid_problem(np.array([3, 6]), 2) is False
+    assert util.is_valid_problem(np.array([2, 4, 6, 8]), 3) is False
+    assert util.is_valid_problem(np.array([6, 15, 12, 9, 24]), 1) is False
+    assert util.is_valid_problem([6], 5) is False
 
 
 def test_closest_pitcher():
