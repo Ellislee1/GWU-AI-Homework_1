@@ -103,7 +103,7 @@ class Node:
 
 """
     A* Algorithm, using 'get_h()' lower bound.
-    - env:          The environment to control the pitcher propergation
+    - env:          The environment to control the pitcher propagation
     - open:         Min-heap (f) on open states
     - open_dict:    An unorderd dictionary of the open hashes, 
                     used for quick access over the heap

@@ -1,6 +1,14 @@
 import numpy as np
 
-
+"""
+    Emvironment class acts as an interface to simulate taking all
+    action available from a given initial state.
+        - pitchers:     The maximum volume in all pitchers
+        - goal:         The goal to reach
+        - steps:        The number of steps to reach the current state
+        - volumes:      The vurrent volumes in the pitchers in the current
+                        state
+"""
 class Environment:
     def __init__(self, pitchers, goal):
         self.pitchers = pitchers
@@ -10,6 +18,10 @@ class Environment:
         self.volumes = np.zeros(len(pitchers) + 1)
 
     def propagate(self, volumes=None, steps=None):
+        """'propagate' simulates all possible valid next steps from the
+            current state"""
+        
+        # Load the state
         if volumes is not None and steps is not None:
             self.load_env_state(volumes, steps)
         
@@ -39,7 +51,8 @@ class Environment:
             for j in range(-1, len(self.volumes) - 1):
                 if i == j:
                     continue
-
+                
+                # Dump all into infinate state "-1"
                 if j == -1:
                     copy = np.copy(self.volumes)
                     copy[j] += copy[i]
