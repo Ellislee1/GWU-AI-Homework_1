@@ -12,7 +12,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 3
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive=True)
+        a.run(naive=False)
         self.assertEqual(a.get_steps(),2)
 
     def test_0(self):
@@ -21,7 +21,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 6
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive=True)
+        a.run(naive=False)
         self.assertEqual(a.get_steps(),4)
 
     def test_1(self):
@@ -30,7 +30,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 8
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),5)
 
     def test_2(self):
@@ -39,7 +39,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 4
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),7)
 
     def test_3(self):
@@ -48,7 +48,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 6
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),4)
 
     def test_4(self): 
@@ -57,7 +57,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 15
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),5) 
 
     def test_5(self):
@@ -66,7 +66,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 8
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),5)
 
     def test_6(self): # 12-5 = 7
@@ -75,7 +75,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 7
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),3)
 
     def test_7(self): # 12-3 = 9 + (4-3) = 10
@@ -84,7 +84,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 10
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),6)
 
     def test_8(self): # 15-3 = 12-1 = 11
@@ -93,26 +93,26 @@ class EnvironmentTests(unittest.TestCase):
         goal = 11
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),4)
 
  
- #   def test_9(self): # (31-11) = 20 * 2
- #       pitchers = np.array([7,11,17,23,31,57])
- #       goal = 40
- #       env = Env(pitchers,goal)
- #       a = A(env)
- #       a.run(naive = True)
- #       self.assertEqual(a.get_steps(),3)
+    def test_9(self): # (31-11) = 20 * 2
+        pitchers = np.array([7,11,17,23,31,57])
+        goal = 40
+        env = Env(pitchers,goal)
+        a = A(env)
+        a.run(naive = False)
+        self.assertEqual(a.get_steps(),3)
 
-#    def test_10(self): # 6*9 + 4 + 3 
-#        # 5 pitcher - long time test
-#        pitchers = np.array([1,2,3,4,6])
-#        goal = 61
-#        env = Env(pitchers,goal)
-#        a = A(env)
-#        a.run(naive = True)
-#        self.assertEquals(a.get_steps(),22)
+    def test_10(self): # 6*9 + 4 + 3 
+        # 5 pitcher - long time test
+        pitchers = np.array([1,2,3,4,6])
+        goal = 61
+        env = Env(pitchers,goal)
+        a = A(env)
+        a.run(naive = False)
+        self.assertEquals(a.get_steps(),22)
 
     def test_11(self):
         # 4 Pitcher - No solution
@@ -120,8 +120,63 @@ class EnvironmentTests(unittest.TestCase):
         goal = 13
         env = Env(pitchers,goal)
         a = A(env)
-        a.run(naive = True)
+        a.run(naive = False)
         self.assertEquals(a.get_steps(),0)
+
+    def test_12(self):
+        # 4 Pitcher - 2 transfer no dump
+        pitchers = np.array([1,4,20,31])
+        goal = 27
+        env = Env(pitchers,goal)
+        a = A(env)
+        a.run(naive = False)
+        self.assertEquals(a.get_steps(),5)
+
+    def test_13(self):
+        # no step test
+        pitchers = np.array([1])
+        goal = 0
+        env = Env(pitchers,goal)
+        a = A(env)
+        a.run(naive = False)
+        self.assertEquals(a.get_steps(),0)
+    
+    def test_14(self):
+        # transfer+transfer+dump test
+        pitchers = np.array([1,14,31])
+        goal = 4
+        env = Env(pitchers,goal)
+        a = A(env)
+        a.run(naive = False)
+        self.assertEquals(a.get_steps(),7)
+
+    def test_15(self):
+
+        pitchers = np.array([2,51,99])
+        goal = 77
+        env = Env(pitchers, goal)
+        a = A(env)
+        a.run(naive = False)
+        self.assertEquals(a.get_steps(),5)
+
+    def test_16(self):
+        pitchers = np.array([1,5,7])
+        goal = 3
+        env = Env(pitchers, goal)
+        a = A(env)
+        a.run(naive = False)
+        self.assertEquals(a.get_steps(),5)
+
+    def test_17(self):
+        pitchers = np.array([40,42])
+        goal = 10
+        env = Env(pitchers, goal)
+        a = A(env)
+        a.run(naive = False)
+        self.assertEquals(a.get_steps(),15)
+
+        
+
 
 
 
