@@ -31,7 +31,6 @@ def get_h(state, goal: int, pitchers) -> int:
         # check for exact solution
         if target - amount == 0:
             estimate -= 1
-            break
 
         # penalize for unnecessarily filling other pitchers
         if i != closest_index and amount > 0:
