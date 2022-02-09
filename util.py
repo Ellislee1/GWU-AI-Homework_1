@@ -1,9 +1,10 @@
-import numpy as np
-from math import gcd
 import math
 from functools import reduce
+from math import gcd
 from typing import Tuple
+
 import numba as nb
+import numpy as np
 
 
 def is_valid_problem(pitchers: np.array, target: int) -> bool:
@@ -39,4 +40,4 @@ def closest_multiple(pitcher: int, target: int) -> int:
     """Returns the closest multiple of the pitcher to the target"""
     if pitcher == 0:
         return 0
-    return round(target / pitcher)
+    return math.ceil(target / pitcher)

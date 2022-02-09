@@ -20,13 +20,15 @@ def get_h(state, goal: int, pitchers) -> int:
     if goal > np.max(pitchers):
         target = goal - state[-1]
     else:
-        target = np.min(goal-state)
+        target = goal - np.min(np.abs(goal-state))
     estimate = 0
+
+    # print(goal - state[-1], np.min(goal-state))
 
     # goal pitcher is overflowed: (ideal case) just pour out exact excess into another cup
     if target <= 0:
         return 1
-
+        
     # find the pitcher closest to the target value
     closest, closest_index = util.find_closest(pitchers, target)
     # get the multiple of that pitcher that gets closest to the target amount
@@ -51,7 +53,8 @@ def get_h(state, goal: int, pitchers) -> int:
 
     # div 10 is normalisation for the floor consideration. This assumes we take
     # the step that brings use closest to the target.
-    return estimate+math.floor(np.min(goal-state)/10)
+    # print(estimate+math.floor(np.min(goal-state)/11))
+    return estimate+math.floor(np.min(goal-state)/11)
     
 
 
@@ -94,7 +97,7 @@ class Node:
             return __o.g < self.g
     
     def __hash__(self):
-        """Has function for accessing state in dictionaries"""
+        """Hash function for accessing state in dictionaries"""
         _str = str(int(np.sum(self.state[:-1])))
         for i in range(len(self.state[:-1])):
             _str += f'_{str(int(self.state[i]))}'
@@ -173,20 +176,6 @@ class AStar:
         # Generate Q's successors
         successors = np.array(self.env.propagate(q.state[:-1], q.state[-1]))
 
-        # Trim everything if the lower bound already exists
-        if self.lower is not None:
-            try:
-                successors_n = successors[np.where(np.array(successors)[:,-1] < self.lower)[0]]
-                successors = successors_n
-            except:
-                # Check to see if trimmed values can be added to the closed dict
-                for state in successors:
-                    to_add = Node(state, q, get_h(state[:-1], self.goal, self.env.pitchers))
-                    if (hash(q) in self.closed and self.closed[hash(q)].g > q.g) or q not in self.closed:
-                        self.closed[hash(q)] = q
-                self.end_iter()
-                return len(self.open) <= 0
-
         # Add to open
         for state in successors:
             to_add = Node(state, q, get_h(state[:-1], self.goal, self.env.pitchers))
@@ -209,9 +198,11 @@ class AStar:
             if hash(to_add) in self.closed and self.closed[hash(to_add)].g <= to_add.g:
                 continue
             
-
-            heapq.heappush(self.open, to_add)
-            self.open_dict[hash(to_add)] = to_add
+            if self.lower is None or to_add.f < self.lower:
+                heapq.heappush(self.open, to_add)
+                self.open_dict[hash(to_add)] = to_add
+            else:
+                self.closed[hash(to_add)] = to_add
 
 
         self.end_iter()

@@ -1,10 +1,10 @@
 import argparse
+import time
+
 import util
 from AStar import AStar as A
 from Environment import Environment as Env
 from FileParser import Parser
-import time
-
 
 default_path = "Files/test3.txt"
 
