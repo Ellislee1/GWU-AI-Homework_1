@@ -7,17 +7,58 @@ import numpy as np
 import util
 from Environment import Environment as Env
 
+
+def rh(state, distance: int, pitchers: np.array, est=0) -> int:
+    # get the largest amount of water in a cup that is <= the remaining distance
+    # closest, index = util.closest_under(pitchers, distance)
+    closest, index = util.find_closest(pitchers, distance)
+
+    # no pitcher <= remaining amount of water
+    # if closest == -1:
+    # go through the current water levels
+    for volume in state[:-1]:
+        # if 1 of the cups has the desired water, only 1 step away
+        if volume == distance:
+            return est + 1
+
+    if distance < 0:
+        # should still just find the closest right?
+        # ??
+        # if one of the cups is a multiple of the remaining abs(distance)
+        #   return (abs(distance)/cup) * 2
+        # Above might be bad: what if solution is faster using a combination of the remaining cups?
+
+        # best case: transfer excess out into one of the remaining cups
+        return est + 1
+
+    # Basically done: 1 step away
+    if distance - closest == 0:
+        # pitcher to use is already filled, subtract a step
+        if state[index] == closest:
+            est -= 1
+        else:
+            # Otherwise, need 2 steps to goal (fill cup and transfer)
+            est += 2
+        return est
+
+    # can still subtract the largest cup without reaching the goal, so recurse
+    return rh(np.copy(state), distance-closest, pitchers, est+2)
+
+
+def get_h(state, goal: int, pitchers: np.array) -> int:
+    # subtract the amount that's already in the goal pitcher
+    distance = goal - state[-1]
+    return rh(state, distance, pitchers)
 """
     Gets the heuristic value (h) for a given state and goal.
 """
+"""
 @nb.njit(nogil=True)
 def get_h(state, goal: int, pitchers) -> int:
-    """
         If the value of the goal is greater than the largest pitcher then
         we only care about the value in the largest pitcher for our target.
         Otherwise, we care about the entire state space (overfill strategy considered).
-    """
-    if goal > np.max(pitchers):
+    if goal > np.max(state[:-1]):
         target = goal - state[-1]
     else:
         target = goal - np.min(np.abs(goal-state))
@@ -43,7 +84,7 @@ def get_h(state, goal: int, pitchers) -> int:
     # add 1 step for each filled pitcher (prioritize transferring to goal state)
     for i, amount in enumerate(state[:-1]):
         # check for exact solution
-        if target - amount ==0:
+        if target - amount == 0:
             return 1
 
         # penalize for unnecessarily filling other pitchers
@@ -56,6 +97,7 @@ def get_h(state, goal: int, pitchers) -> int:
     # print(estimate+math.floor(np.min(goal-state)/11))
     return estimate+math.floor(np.min(goal-state)/11)
     
+"""
 
 
 """
@@ -66,6 +108,8 @@ def get_h(state, goal: int, pitchers) -> int:
         - h:            Heuristic value
         - f:            Combination g+h
 """
+
+
 class Node:
     def __init__(self, state, parent, h=0):
         self.state = np.copy(state)
@@ -157,6 +201,7 @@ class AStar:
 
         # get min-cost state from min-heap
         q = heapq.heappop(self.open)
+        # print(q)
 
         # Handle phantom edge case, rarely called, does not affect code progression
         try:

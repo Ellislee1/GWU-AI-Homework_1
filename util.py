@@ -40,4 +40,4 @@ def closest_multiple(pitcher: int, target: int) -> int:
     """Returns the closest multiple of the pitcher to the target"""
     if pitcher == 0:
         return 0
-    return math.ceil(target / pitcher)
+    return round(target / pitcher)
