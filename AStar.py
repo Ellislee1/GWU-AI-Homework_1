@@ -17,21 +17,20 @@ def get_h(state, goal: int, pitchers) -> int:
         we only care about the value in the largest pitcher for our target.
         Otherwise, we care about the entire state space (overfill strategy considered).
     """
-    if goal > np.max(pitchers):
-        target = goal - state[-1]
-    else:
-        target = goal - np.min(np.abs(goal-state))
-    estimate = 0
-
-    # print(goal - state[-1], np.min(goal-state))
+    target = goal - np.min(goal-state)
+    estimate = np.sum(np.abs(state-target))
 
     # goal pitcher is overflowed: (ideal case) just pour out exact excess into another cup
     if target <= 0:
         return 1
-        
-    # find the pitcher closest to the target value
-    closest, closest_index = util.find_closest(pitchers, target)
-    # get the multiple of that pitcher that gets closest to the target amount
+    
+    closest, closest_index = util.closest_modulo(pitchers,target)
+
+    if closest ==  -1 or closest_index == -1:
+        # find the pitcher closest to the target value
+        closest, closest_index = util.find_closest(pitchers, target)
+        # get the multiple of that pitcher that gets closest to the target amount
+    
     multiple: int = util.closest_multiple(closest, target)
 
     # add 2 steps for each multiple (1 to fill, 1 to transfer)
@@ -47,16 +46,14 @@ def get_h(state, goal: int, pitchers) -> int:
             return 1
 
         # penalize for unnecessarily filling other pitchers
-        if i != closest_index and amount > 0 and state[closest_index] == pitchers[closest_index]:
+        if i != closest_index and amount > 0:
             # avoid double counting ideal (closest) pitcher
+            # if amount == pitchers[i]:
             estimate += 1
 
     # div 10 is normalisation for the floor consideration. This assumes we take
     # the step that brings use closest to the target.
-    # print(estimate+math.floor(np.min(goal-state)/11))
-    return estimate+math.floor(np.min(goal-state)/11)
-    
-
+    return round(estimate+np.min(goal-state)/11)
 
 """
     A node in the A* graph.
@@ -76,13 +73,6 @@ class Node:
 
     def __str__(self) -> str:
         return f"{self.state}, f: {self.f}"
-
-    def __eq__(self, __o: object) -> bool:
-
-        if isinstance(__o, Node):
-            return (__o.g == self.g).all()
-        
-        return False
     
     def __lt__(self, __o: object) -> bool:
         if isinstance(__o, Node):
@@ -156,29 +146,29 @@ class AStar:
             return True
 
         # get min-cost state from min-heap
-        q = heapq.heappop(self.open)
+        selected = heapq.heappop(self.open)
 
         # Handle phantom edge case, rarely called, does not affect code progression
         try:
-            del self.open_dict[hash(q)]
+            del self.open_dict[hash(selected)]
         except:
             pass
         
-        # Handle adding q to the closed list
-        if (hash(q) in self.closed and self.closed[hash(q)].g > q.g) or q not in self.closed:
-            self.closed[hash(q)] = q
+        # Handle adding selected to the closed list
+        if (hash(selected) in self.closed and self.closed[hash(selected)].g > selected.g) or selected not in self.closed:
+            self.closed[hash(selected)] = selected
         
-        # Make sure that the current q.g is less than the lower value
-        if self.lower is not None and self.lower <= q.g:
+        # Make sure that the current selected.g is less than the lower value
+        if self.lower is not None and self.lower <= selected.g and self.lower <= selected.f:
             self.end_iter()
             return len(self.open) <= 0
             
-        # Generate Q's successors
-        successors = np.array(self.env.propagate(q.state[:-1], q.state[-1]))
+        # Generate selected's successors
+        successors = np.array(self.env.propagate(selected.state[:-1], selected.state[-1]))
 
         # Add to open
         for state in successors:
-            to_add = Node(state, q, get_h(state[:-1], self.goal, self.env.pitchers))
+            to_add = Node(state, selected, get_h(state[:-1], self.goal, self.env.pitchers))
             if self.check_finished(state):
                 val = self.clear_up(to_add)
                 if naive:
@@ -249,6 +239,8 @@ class AStar:
                   f"Open branches =  {len(self.open)}\t\t\t\t\t\t\t\t\t")
 
     def clear_up(self, poss):
+        """Ensure the goal state has the correct value in the infinate
+        pitcher."""
         node = poss
         self.closed[hash(node)] = node
         success_index = np.where(node.state[:-1] == self.env.goal)[0]

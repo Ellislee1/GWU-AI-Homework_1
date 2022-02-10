@@ -15,7 +15,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 3
         env = Env(pitchers,goal)
         a = A(env)
-        a.run()
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),2)
 
     def test_0(self):
@@ -24,7 +24,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 6
         env = Env(pitchers,goal)
         a = A(env)
-        a.run()
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),4)
 
     def test_1(self):
@@ -33,7 +33,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 8
         env = Env(pitchers,goal)
         a = A(env)
-        a.run()
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),5)
 
     def test_2(self):
@@ -42,7 +42,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 4
         env = Env(pitchers,goal)
         a = A(env)
-        a.run()
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),7)
 
     def test_3(self):
@@ -51,7 +51,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 6
         env = Env(pitchers,goal)
         a = A(env)
-        a.run()
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),3)
 
     def test_4(self): 
@@ -60,7 +60,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 15
         env = Env(pitchers,goal)
         a = A(env)
-        a.run()
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),5) 
 
     def test_5(self):
@@ -69,7 +69,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 8
         env = Env(pitchers,goal)
         a = A(env)
-        a.run()
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),5)
 
     def test_6(self): # 12-5 = 7
@@ -78,7 +78,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 7
         env = Env(pitchers,goal)
         a = A(env)
-        a.run()
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),3)
     
     # Needs a new h
@@ -88,7 +88,7 @@ class EnvironmentTests(unittest.TestCase):
         goal = 10
         env = Env(pitchers,goal)
         a = A(env)
-        a.run()
+        a.run(naive = False)
         self.assertEqual(a.get_steps(),6)
 
     def test_8(self): # 15-3 = 12-1 = 11
@@ -215,8 +215,8 @@ class UtilTests(unittest.TestCase):
         self.assertEquals(util.closest_multiple(4, 12), 3)
         self.assertEquals(util.closest_multiple(1, 5) , 5)
         self.assertEquals(util.closest_multiple(4, 3), 1)
-        self.assertEquals(util.closest_multiple(5, 1), 0)
-        self.assertEquals(util.closest_multiple(7, 10), 1)
+        self.assertEquals(util.closest_multiple(5, 1), 1)
+        self.assertEquals(util.closest_multiple(7, 10), 2)
         self.assertEquals(util.closest_multiple(7, 12), 2)
 
 
