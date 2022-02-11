@@ -7,63 +7,64 @@ import numpy as np
 import util
 from Environment import Environment as Env
 
-"""
-    Gets the heuristic value (h) for a given state and goal.
-"""
-@nb.njit(nogil=True)
-def get_h(state, goal: int, pitchers) -> int:
-    """
-        If the value of the goal is greater than the largest pitcher then
-        we only care about the value in the largest pitcher for our target.
-        Otherwise, we care about the entire state space (overfill strategy considered).
-    """
-    target = goal - np.min(goal-state)
-    estimate = np.sum(np.abs(state-target))
 
-    # goal pitcher is overflowed: (ideal case) just pour out exact excess into another cup
-    if target <= 0:
-        return 1
-    
-    closest, closest_index = util.closest_modulo(pitchers,target)
+def rh(state, distance: int, pitchers: np.array, est=0) -> int:
+    """Gets the heuristic value (h) for a given state and goal."""
 
-    if closest ==  -1 or closest_index == -1:
-        # find the pitcher closest to the target value
-        closest, closest_index = util.find_closest(pitchers, target)
-        # get the multiple of that pitcher that gets closest to the target amount
-    
-    multiple: int = util.closest_multiple(closest, target)
+    # base: reached goal state
+    if distance == 0:
+        return est
 
-    # add 2 steps for each multiple (1 to fill, 1 to transfer)
-    estimate += multiple * 2
-    # subtract a step if cup to use is already fully filled
-    if state[closest_index] == pitchers[closest_index]:
-        estimate -= 1
+    # get the largest amount of water in a cup that is <= the remaining distance
+    closest, index = util.find_closest(pitchers, abs(distance))
 
-    # add 1 step for each filled pitcher (prioritize transferring to goal state)
-    for i, amount in enumerate(state[:-1]):
-        # check for exact solution
-        if target - amount ==0:
-            return 1
+    # go through the current water levels
+    for i, pitcher in enumerate(pitchers):
+        if pitcher == abs(distance):
+            # If we still need to add water to gaol pitcher
+            if distance > 0:
+                # if 1 of the cups has the desired water, only 1 step away
+                if state[i] == pitcher:
+                    return est + 1
+                else:
+                    return est + 3
+            else:
+                # if we need to take water out from the goal pitcher:
+                # if the perfect cup is empty, only 1 step away (transfer excess out)
+                if state[i] == 0:
+                    return est + 1
+                else:
+                    # otherwise, need an additional step to first empty cup and then transfer excess out
+                    return est + 2
 
-        # penalize for unnecessarily filling other pitchers
-        if i != closest_index and amount > 0:
-            # avoid double counting ideal (closest) pitcher
-            # if amount == pitchers[i]:
-            estimate += 1
+    # no pitcher small enough to fill difference; best case from here is transfer between 2 pitchers,
+    # then transfer to goal
+    if abs(distance) < np.min(pitchers):
+        return est + 3
 
-    # div 10 is normalisation for the floor consideration. This assumes we take
-    # the step that brings use closest to the target.
-    return round(estimate+np.min(goal-state)/11)
+    # can still subtract the closest cup without reaching the goal, so recurse
+    if distance > 0:
+        return rh(state, distance-closest, pitchers, est+2)
+    else:
+        # target is overflowed, so transfer from goal out to closest match
+        return rh(state, distance+closest, pitchers, est+2)
 
-"""
-    A node in the A* graph.
-        - state:        The current state ([<volumes>,steps])
-        - parent:       The parent node that created this node
-        - g:            Total steps to this point
-        - h:            Heuristic value
-        - f:            Combination g+h
-"""
+
+def get_h(state, goal: int, pitchers: np.array) -> int:
+    # subtract the amount that's already in the goal pitcher
+    distance = goal - state[-1]
+    return rh(state, distance, pitchers)
+
+
 class Node:
+    """
+        A node in the A* graph.
+            - state:        The current state ([<volumes>,steps])
+            - parent:       The parent node that created this node
+            - g:            Total steps to this point
+            - h:            Heuristic value
+            - f:            Combination g+h
+    """
     def __init__(self, state, parent, h=0):
         self.state = np.copy(state)
         self.parent = parent
