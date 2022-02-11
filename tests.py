@@ -153,13 +153,13 @@ class EnvironmentTests(unittest.TestCase):
         a.run(naive = False)
         self.assertEquals(a.get_steps(),7)
 
-    # def test_15(self):
-    #     pitchers = np.array([2,51,99])
-    #     goal = 77
-    #     env = Env(pitchers, goal)
-    #     a = A(env)
-    #     a.run(naive = False)
-    #     self.assertEquals(a.get_steps(),23)
+    def test_15(self):
+        pitchers = np.array([2,51,99])
+        goal = 77
+        env = Env(pitchers, goal)
+        a = A(env)
+        a.run(naive = False)
+        self.assertEquals(a.get_steps(),23)
 
     def test_16(self):
         pitchers = np.array([1,5,7])

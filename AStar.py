@@ -9,108 +9,62 @@ from Environment import Environment as Env
 
 
 def rh(state, distance: int, pitchers: np.array, est=0) -> int:
-    # get the largest amount of water in a cup that is <= the remaining distance
-    # closest, index = util.closest_under(pitchers, distance)
-    closest, index = util.find_closest(pitchers, distance)
+    """Gets the heuristic value (h) for a given state and goal."""
 
-    # no pitcher <= remaining amount of water
-    # if closest == -1:
-    # go through the current water levels
-    for volume in state[:-1]:
-        # if 1 of the cups has the desired water, only 1 step away
-        if volume == distance:
-            return est + 1
-
-    if distance < 0:
-        # should still just find the closest right?
-        # ??
-        # if one of the cups is a multiple of the remaining abs(distance)
-        #   return (abs(distance)/cup) * 2
-        # Above might be bad: what if solution is faster using a combination of the remaining cups?
-
-        # best case: transfer excess out into one of the remaining cups
-        return est + 1
-
-    # Basically done: 1 step away
-    if distance - closest == 0:
-        # pitcher to use is already filled, subtract a step
-        if state[index] == closest:
-            est -= 1
-        else:
-            # Otherwise, need 2 steps to goal (fill cup and transfer)
-            est += 2
+    # base: reached goal state
+    if distance == 0:
         return est
 
-    # can still subtract the largest cup without reaching the goal, so recurse
-    return rh(np.copy(state), distance-closest, pitchers, est+2)
+    # get the largest amount of water in a cup that is <= the remaining distance
+    closest, index = util.find_closest(pitchers, abs(distance))
+
+    # go through the current water levels
+    for i, pitcher in enumerate(pitchers):
+        if pitcher == abs(distance):
+            # If we still need to add water to gaol pitcher
+            if distance > 0:
+                # if 1 of the cups has the desired water, only 1 step away
+                if state[i] == pitcher:
+                    return est + 1
+                else:
+                    return est + 3
+            else:
+                # if we need to take water out from the goal pitcher:
+                # if the perfect cup is empty, only 1 step away (transfer excess out)
+                if state[i] == 0:
+                    return est + 1
+                else:
+                    # otherwise, need an additional step to first empty cup and then transfer excess out
+                    return est + 2
+
+    # no pitcher small enough to fill difference; best case from here is transfer between 2 pitchers,
+    # then transfer to goal
+    if abs(distance) < np.min(pitchers):
+        return est + 3
+
+    # can still subtract the closest cup without reaching the goal, so recurse
+    if distance > 0:
+        return rh(state, distance-closest, pitchers, est+2)
+    else:
+        # target is overflowed, so transfer from goal out to closest match
+        return rh(state, distance+closest, pitchers, est+2)
 
 
 def get_h(state, goal: int, pitchers: np.array) -> int:
     # subtract the amount that's already in the goal pitcher
     distance = goal - state[-1]
     return rh(state, distance, pitchers)
-"""
-    Gets the heuristic value (h) for a given state and goal.
-"""
-"""
-@nb.njit(nogil=True)
-def get_h(state, goal: int, pitchers) -> int:
-        If the value of the goal is greater than the largest pitcher then
-        we only care about the value in the largest pitcher for our target.
-        Otherwise, we care about the entire state space (overfill strategy considered).
-    if goal > np.max(state[:-1]):
-        target = goal - state[-1]
-    else:
-        target = goal - np.min(np.abs(goal-state))
-    estimate = 0
-
-    # print(goal - state[-1], np.min(goal-state))
-
-    # goal pitcher is overflowed: (ideal case) just pour out exact excess into another cup
-    if target <= 0:
-        return 1
-        
-    # find the pitcher closest to the target value
-    closest, closest_index = util.find_closest(pitchers, target)
-    # get the multiple of that pitcher that gets closest to the target amount
-    multiple: int = util.closest_multiple(closest, target)
-
-    # add 2 steps for each multiple (1 to fill, 1 to transfer)
-    estimate += multiple * 2
-    # subtract a step if cup to use is already fully filled
-    if state[closest_index] == pitchers[closest_index]:
-        estimate -= 1
-
-    # add 1 step for each filled pitcher (prioritize transferring to goal state)
-    for i, amount in enumerate(state[:-1]):
-        # check for exact solution
-        if target - amount == 0:
-            return 1
-
-        # penalize for unnecessarily filling other pitchers
-        if i != closest_index and amount > 0 and state[closest_index] == pitchers[closest_index]:
-            # avoid double counting ideal (closest) pitcher
-            estimate += 1
-
-    # div 10 is normalisation for the floor consideration. This assumes we take
-    # the step that brings use closest to the target.
-    # print(estimate+math.floor(np.min(goal-state)/11))
-    return estimate+math.floor(np.min(goal-state)/11)
-    
-"""
-
-
-"""
-    A node in the A* graph.
-        - state:        The current state ([<volumes>,steps])
-        - parent:       The parent node that created this node
-        - g:            Total steps to this point
-        - h:            Heuristic value
-        - f:            Combination g+h
-"""
 
 
 class Node:
+    """
+        A node in the A* graph.
+            - state:        The current state ([<volumes>,steps])
+            - parent:       The parent node that created this node
+            - g:            Total steps to this point
+            - h:            Heuristic value
+            - f:            Combination g+h
+    """
     def __init__(self, state, parent, h=0):
         self.state = np.copy(state)
         self.parent = parent
@@ -201,7 +155,6 @@ class AStar:
 
         # get min-cost state from min-heap
         q = heapq.heappop(self.open)
-        # print(q)
 
         # Handle phantom edge case, rarely called, does not affect code progression
         try:
