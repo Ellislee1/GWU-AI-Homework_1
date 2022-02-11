@@ -36,6 +36,17 @@ def find_closest(pitchers: np.array, target: int) -> Tuple[int, int]:
 
 
 @nb.njit(nogil=True)
+def closest_modulo(pitchers: np.array, target: int) -> Tuple[int,int]:
+    find_mods = np.where((pitchers % target)==0)[0]
+    if len(find_mods) == 0:
+        return -1, -1
+
+    index = np.argmin(pitchers[find_mods]/target)
+    index = find_mods[index]
+    return pitchers[index], index
+
+
+@nb.njit(nogil=True)
 def closest_multiple(pitcher: int, target: int) -> int:
     """Returns the closest multiple of the pitcher to the target"""
     if pitcher == 0:

@@ -74,13 +74,6 @@ class Node:
 
     def __str__(self) -> str:
         return f"{self.state}, f: {self.f}"
-
-    def __eq__(self, __o: object) -> bool:
-
-        if isinstance(__o, Node):
-            return (__o.g == self.g).all()
-        
-        return False
     
     def __lt__(self, __o: object) -> bool:
         if isinstance(__o, Node):
@@ -154,29 +147,29 @@ class AStar:
             return True
 
         # get min-cost state from min-heap
-        q = heapq.heappop(self.open)
+        selected = heapq.heappop(self.open)
 
         # Handle phantom edge case, rarely called, does not affect code progression
         try:
-            del self.open_dict[hash(q)]
+            del self.open_dict[hash(selected)]
         except:
             pass
         
-        # Handle adding q to the closed list
-        if (hash(q) in self.closed and self.closed[hash(q)].g > q.g) or q not in self.closed:
-            self.closed[hash(q)] = q
+        # Handle adding selected to the closed list
+        if (hash(selected) in self.closed and self.closed[hash(selected)].g > selected.g) or selected not in self.closed:
+            self.closed[hash(selected)] = selected
         
-        # Make sure that the current q.g is less than the lower value
-        if self.lower is not None and self.lower <= q.g:
+        # Make sure that the current selected.g is less than the lower value
+        if self.lower is not None and self.lower <= selected.g and self.lower <= selected.f:
             self.end_iter()
             return len(self.open) <= 0
             
-        # Generate Q's successors
-        successors = np.array(self.env.propagate(q.state[:-1], q.state[-1]))
+        # Generate selected's successors
+        successors = np.array(self.env.propagate(selected.state[:-1], selected.state[-1]))
 
         # Add to open
         for state in successors:
-            to_add = Node(state, q, get_h(state[:-1], self.goal, self.env.pitchers))
+            to_add = Node(state, selected, get_h(state[:-1], self.goal, self.env.pitchers))
             if self.check_finished(state):
                 val = self.clear_up(to_add)
                 if naive:
@@ -247,6 +240,8 @@ class AStar:
                   f"Open branches =  {len(self.open)}\t\t\t\t\t\t\t\t\t")
 
     def clear_up(self, poss):
+        """Ensure the goal state has the correct value in the infinate
+        pitcher."""
         node = poss
         self.closed[hash(node)] = node
         success_index = np.where(node.state[:-1] == self.env.goal)[0]
